@@ -1,0 +1,14 @@
+oauth2:
+  server:
+    resourceid: DEV_REXIJIE_OAUTH2
+    implicit-enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:9761/eureka/
+spring:
+  data:
+    mongodb:
+      uri: mongodb+srv://${MONGO_USERNAME}:${MONGO_PASSWORD}@oauth2-cluster.gvdxn.mongodb.net/authserver?retryWrites=true&w=majority
+      auto-index-creation: true
