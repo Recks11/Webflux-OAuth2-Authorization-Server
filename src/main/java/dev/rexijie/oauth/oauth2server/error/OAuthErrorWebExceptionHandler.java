@@ -1,5 +1,6 @@
 package dev.rexijie.oauth.oauth2server.error;
 
+import org.apache.http.HttpHeaders;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.DefaultErrorWebExceptionHandler;
@@ -19,15 +20,24 @@ public class OAuthErrorWebExceptionHandler extends DefaultErrorWebExceptionHandl
         super(errorAttributes, resources, errorProperties, applicationContext);
     }
 
+    /**
+     * Render the error response as JSON
+     */
     @Override
     protected Mono<ServerResponse> renderErrorResponse(ServerRequest request) {
-        Throwable error = getError(request);
-        if (error instanceof StatusAwareException exception) {
-            Map<String, Object> errorAttrs = getErrorAttributes(request, getErrorAttributeOptions(request, MediaType.ALL));
-            return ServerResponse.status(exception.getStatus())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(errorAttrs));
-        }
-        return super.renderErrorResponse(request);
+        Map<String, Object> errorAttributes = getErrorAttributes(request, getErrorAttributeOptions(request, MediaType.ALL));
+        Object path = errorAttributes.remove("path");
+        String errorPath = "/errors";
+        if (path != null) errorPath = (String) path;
+        return ServerResponse
+                .status(getHttpStatus(errorAttributes))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.LOCATION, errorPath)
+                .body(BodyInserters.fromValue(errorAttributes));
+    }
+
+    @Override
+    protected int getHttpStatus(Map<String, Object> errorAttributes) {
+        return (int) errorAttributes.remove("status");
     }
 }

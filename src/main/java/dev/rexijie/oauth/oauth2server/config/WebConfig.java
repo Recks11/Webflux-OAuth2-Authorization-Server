@@ -6,13 +6,16 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.DefaultErrorWebExceptionHandler;
+import org.springframework.boot.web.reactive.error.DefaultErrorAttributes;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.codec.ServerCodecConfigurer;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.reactive.config.EnableWebFlux;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.result.view.ViewResolver;
@@ -23,16 +26,25 @@ import java.util.stream.Collectors;
 @EnableWebFlux
 public class WebConfig implements WebFluxConfigurer {
 
+    @Bean
+    public ErrorAttributes errorAttributes(MessageSource messageSource) {
+        return new OAuthErrorAttributes(
+                new DefaultErrorAttributes(),
+                messageSource
+        );
+    }
+
     /**
      * Include custom error handler
      */
     @Bean
     @Order(-1)
-    public ErrorWebExceptionHandler errorWebExceptionHandler(ServerProperties serverProperties,
+    public ErrorWebExceptionHandler errorWebExceptionHandler(ErrorAttributes errorAttributes,
+                                                             ServerProperties serverProperties,
                                                              WebProperties webProperties, ObjectProvider<ViewResolver> viewResolvers,
                                                              ServerCodecConfigurer serverCodecConfigurer,
                                                              ApplicationContext applicationContext) {
-        DefaultErrorWebExceptionHandler exceptionHandler = new OAuthErrorWebExceptionHandler(errorAttributes(),
+        DefaultErrorWebExceptionHandler exceptionHandler = new OAuthErrorWebExceptionHandler(errorAttributes,
                 webProperties.getResources(),
                 serverProperties.getError(),
                 applicationContext);
@@ -43,7 +55,9 @@ public class WebConfig implements WebFluxConfigurer {
     }
 
     @Bean
-    public ErrorAttributes errorAttributes() {
-        return new OAuthErrorAttributes();
+    public LocalValidatorFactoryBean getValidator(MessageSource messageSource) {
+        LocalValidatorFactoryBean validatorBean = new LocalValidatorFactoryBean();
+        validatorBean.setValidationMessageSource(messageSource);
+        return validatorBean;
     }
 }

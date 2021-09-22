@@ -56,13 +56,15 @@ oauth2:
 spring:
   application:
     name: AUTH_SERVER
+  messages:
+    basename: messages
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_SERVER_URL}
 server:
   error:
-    include-binding-errors: never
+    include-binding-errors: always
     include-exception: false
     include-message: never
     include-stacktrace: never
