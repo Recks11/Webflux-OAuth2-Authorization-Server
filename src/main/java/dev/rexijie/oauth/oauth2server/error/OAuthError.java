@@ -2,9 +2,7 @@ package dev.rexijie.oauth.oauth2server.error;
 
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.BAD_REQUEST)
 public class OAuthError extends RuntimeException implements StatusAwareException {
     public static OAuthError INVALID_REQUEST_ERROR = new OAuthError(OAuthErrors.INVALID_REQUEST);
     public static OAuthError INVALID_CLIENT_ERROR = new OAuthError(OAuthErrors.INVALID_CLIENT);
@@ -72,7 +70,7 @@ public class OAuthError extends RuntimeException implements StatusAwareException
         private final String errorDescription;
 
         OAuthErrors(HttpStatus status, String error, String errorDescription) {
-            this.status = HttpStatus.UNAUTHORIZED.value();
+            this.status = status.value();
             this.error = error;
             this.errorDescription = errorDescription;
         }

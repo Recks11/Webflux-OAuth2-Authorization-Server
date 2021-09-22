@@ -6,9 +6,15 @@ oauth2:
 eureka:
   client:
     service-url:
-      defaultZone: ${DISCOVERY_URL:https://discovery.rexijie.dev/eureka/}
+      defaultZone: https://discovery.rexijie.dev/eureka/
 spring:
   data:
     mongodb:
       uri: mongodb+srv://${MONGO_USERNAME}:${MONGO_PASSWORD}@oauth2-cluster.gvdxn.mongodb.net/authserver?retryWrites=true&w=majority
       auto-index-creation: true
+logging:
+  level:
+    com:
+      netflix:
+        eureka: OFF
+        discovery: OFF
