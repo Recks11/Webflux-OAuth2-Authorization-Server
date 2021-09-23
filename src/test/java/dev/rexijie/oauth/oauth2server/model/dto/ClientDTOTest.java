@@ -3,6 +3,7 @@ package dev.rexijie.oauth.oauth2server.model.dto;
 import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.model.ClientProfiles;
 import dev.rexijie.oauth.oauth2server.model.ClientTypes;
+import dev.rexijie.oauth.oauth2server.util.TimeUtils;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -35,8 +36,8 @@ class ClientDTOTest {
             null,
             3600,
             false,
-            LocalDateTime.now(),
-            LocalDateTime.now()
+            TimeUtils.localDateTimeToEpochSecond(LocalDateTime.now()),
+            TimeUtils.localDateTimeToEpochSecond(LocalDateTime.now())
     );
 
     @Test

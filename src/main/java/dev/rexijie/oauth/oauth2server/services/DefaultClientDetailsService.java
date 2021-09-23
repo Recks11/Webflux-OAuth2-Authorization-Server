@@ -1,11 +1,12 @@
 package dev.rexijie.oauth.oauth2server.services;
 
 import dev.rexijie.oauth.oauth2server.api.domain.ClientCredentials;
-import dev.rexijie.oauth.oauth2server.converter.ClientConverter;
-import dev.rexijie.oauth.oauth2server.model.Client;
+import dev.rexijie.oauth.oauth2server.model.ClientUserDetails;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
-import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsPasswordService;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -25,7 +26,7 @@ public class DefaultClientDetailsService implements ReactiveUserDetailsService, 
     @Override
     public Mono<UserDetails> findByUsername(String username) {
         return clientRepository.findByClientId(username)
-                .map(ClientConverter::clientToUserDetails);
+                .map(ClientUserDetails::new);
     }
 
     @Override
@@ -34,7 +35,7 @@ public class DefaultClientDetailsService implements ReactiveUserDetailsService, 
                 .map(client -> ClientDTO.ClientMapper.withCredentials(client, new ClientCredentials(
                         client.id(),
                         encoder.encode(newPassword)))
-                ).map(ClientConverter::clientToUserDetails);
+                ).map(ClientUserDetails::new);
     }
 
 }

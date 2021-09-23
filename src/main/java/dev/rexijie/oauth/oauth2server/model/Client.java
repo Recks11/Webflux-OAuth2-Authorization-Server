@@ -43,8 +43,8 @@ public record Client(
         String tokenEndpointAuthMethod,
         int defaultMaxAge, // default value for max_age claim
         boolean requireAuthTime, // is auth time claim required?
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        long createdAt,
+        long updatedAt
 ) {
 
 

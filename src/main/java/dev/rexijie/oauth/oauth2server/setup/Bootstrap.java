@@ -8,6 +8,7 @@ import dev.rexijie.oauth.oauth2server.model.authority.Authority;
 import dev.rexijie.oauth.oauth2server.model.authority.AuthorityEnum;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
+import dev.rexijie.oauth.oauth2server.util.TimeUtils;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -62,8 +63,8 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
                 null,
                 3600,
                 false,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                TimeUtils.localDateTimeToEpochSecond(LocalDateTime.now()),
+                TimeUtils.localDateTimeToEpochSecond(LocalDateTime.now())
         );
     }
 
