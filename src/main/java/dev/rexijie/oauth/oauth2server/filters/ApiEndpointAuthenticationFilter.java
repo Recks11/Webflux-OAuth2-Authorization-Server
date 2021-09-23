@@ -3,6 +3,9 @@ package dev.rexijie.oauth.oauth2server.filters;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -23,12 +26,12 @@ import java.util.Set;
 public class ApiEndpointAuthenticationFilter implements WebFilter {
 
     private final ObjectMapper objectMapper;
-    private final Set<String> ignoredPaths = new HashSet<>();
+    private final Set<String> applyTo = new HashSet<>();
 
     public ApiEndpointAuthenticationFilter(
             ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        ignoredPaths.addAll(List.of("/oauth","/css","/js", "/openid"));
+        applyTo.addAll(List.of("/api"));
     }
 
     @Override
@@ -36,10 +39,15 @@ public class ApiEndpointAuthenticationFilter implements WebFilter {
         ServerHttpRequest request = exchange.getRequest();
         List<String> authorization = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
 
-        if ((authorization != null && authorization.contains("Bearer")) && !pathShouldBeIgnored(request.getPath().toString())) {
-//            exchange.getResponse().writeWith();
-        }
+        if ((authorization != null && authorization.contains("Basic")) && !appliesTo(request.getPath().toString())) {
+           try {
+               SecurityContextHolder.getContext().setAuthentication(null);
 
+           }catch (Exception ex) {
+               SecurityContextHolder.getContext().setAuthentication(null);
+               return Mono.empty();
+           }
+        }
         return chain.filter(exchange);
     }
 
@@ -48,8 +56,8 @@ public class ApiEndpointAuthenticationFilter implements WebFilter {
                                       Exception exception) throws IOException{
     }
 
-    private boolean pathShouldBeIgnored(String path) {
-        return ignoredPaths
+    private boolean appliesTo(String path) {
+        return applyTo
                 .stream()
                 .anyMatch(path::startsWith);
     }

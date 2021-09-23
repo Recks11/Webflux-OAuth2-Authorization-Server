@@ -6,6 +6,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -64,6 +65,11 @@ public class OAuthErrorAttributes implements ErrorAttributes {
             errorAttributes.put("errors", fieldErrorMap);
         }
 
+        if (error instanceof OAuth2AuthenticationException auth2AuthenticationException) {
+            errorAttributes.put("error", auth2AuthenticationException.getError().getErrorCode());
+            errorAttributes.put("error_description", auth2AuthenticationException.getMessage());
+        }
+
         return errorAttributes;
     }
 
@@ -86,6 +92,7 @@ public class OAuthErrorAttributes implements ErrorAttributes {
         Optional<HttpStatus> responseStatusAnnotation  = getResponseStatusAnnotation(error);
         if (responseStatusAnnotation.isPresent()) return responseStatusAnnotation.get().value();
         if (error instanceof StatusAwareException sae) return sae.getStatus();
+        if (error instanceof OAuth2AuthenticationException) return HttpStatus.BAD_REQUEST.value();
         return 500;
     }
 

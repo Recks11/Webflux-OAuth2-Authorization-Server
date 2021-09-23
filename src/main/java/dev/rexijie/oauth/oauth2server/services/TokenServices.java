@@ -7,4 +7,5 @@ public interface TokenServices {
     Object createAccessToken();
     Object refreshAccessToken();
     Object getAccessToken();
+    String decryptBasicToken(String value);
 }

@@ -30,6 +30,7 @@ public class Endpoints {
     ) {
         return authenticationServerApiEndpoints(landingHandler, clientsHandler, userHandler)
                 .and(tokenEndpoints(tokenHandler))
+                .and(authorizationEndpoints())
                 .and(oidcEndpoint(oidcHandler))
                 .andRoute(all(), landingHandler::forbiddenResponse);
     }
@@ -50,12 +51,14 @@ public class Endpoints {
                 ).build();
     }
 
-    RouterFunction<ServerResponse> authorizationEndpoints(TokenEndpointHandler tokenHandler) {
+    RouterFunction<ServerResponse> authorizationEndpoints() {
         return route()
                 .path(OAUTH_BASE_PATH, home -> home
                         .POST("/authorize", request -> ServerResponse.ok().bodyValue(Map.of("uri", "authorize")))
                         .GET("/userinfo", request -> ServerResponse.ok().bodyValue(Map.of("uri", "userinfo")))
-                        .GET("/introspect", request -> ServerResponse.ok().bodyValue(Map.of("uri", "introspect")))
+                        .GET("/introspect", request -> request.principal().flatMap(p -> ServerResponse
+                                .ok()
+                                .bodyValue(p)))
                 )
                 .build();
     }

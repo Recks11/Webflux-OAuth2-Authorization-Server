@@ -1,8 +1,10 @@
 package dev.rexijie.oauth.oauth2server.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import dev.rexijie.oauth.oauth2server.api.domain.ClientCredentials;
 import dev.rexijie.oauth.oauth2server.model.Client;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
@@ -146,8 +148,38 @@ public class ClientDTO {
                     null
             );
         }
+
         public static Client toClient(ClientDTO clientDTO) {
             return toClient(clientDTO, null, null);
+        }
+
+        public static Client withCredentials(Client client, ClientCredentials credentials) {
+            return new Client(
+                    null,
+                    client.clientName(),
+                    client.clientType(),
+                    client.clientProfile(),
+                    credentials.clientId(),
+                    credentials.clientSecret(),
+                    client.scopes(),
+                    client.resourceIds(),
+                    client.authorizedGrantTypes(),
+                    client.registeredRedirectUris(),
+                    client.authorities(),
+                    client.accessTokenValidity(),
+                    client.refreshTokenValidity(),
+                    client.additionalInfo(),
+                    client.logoUri(),
+                    client.clientUri(),
+                    client.policyUri(),
+                    client.selectorIdentifierUri(),
+                    client.subjectTypes(),
+                    client.tokenEndpointAuthMethod(),
+                    client.defaultMaxAge(),
+                    client.requireAuthTime(),
+                    client.createdAt(),
+                    LocalDateTime.now()
+            );
         }
     }
 }
