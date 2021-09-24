@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.filters;
+package dev.rexijie.oauth.oauth2server.security.filters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.rexijie.oauth.oauth2server.api.domain.ClientCredentials;
@@ -12,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;

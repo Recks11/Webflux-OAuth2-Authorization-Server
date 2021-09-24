@@ -1,9 +1,12 @@
 package dev.rexijie.oauth.oauth2server.config;
 
+import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
+import dev.rexijie.oauth.oauth2server.services.DefaultClientDetailsService;
 import dev.rexijie.oauth.oauth2server.services.DefaultReactiveUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -18,12 +21,16 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebFluxSecurity
 public class WebSecurityConfig {
 
+    private final ClientRepository clientRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public WebSecurityConfig(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public WebSecurityConfig(UserRepository userRepository,
+                             ClientRepository clientRepository,
+                             PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.clientRepository = clientRepository;
     }
 
     @Bean
@@ -34,6 +41,7 @@ public class WebSecurityConfig {
                                 .anyExchange()
                                 .authenticated()
                 )
+                .authenticationManager(clientAuthenticationManager())
                 .httpBasic(withDefaults());
         return http.build();
     }
@@ -46,13 +54,22 @@ public class WebSecurityConfig {
                         exchanges
                                 .anyExchange()
                                 .authenticated()
-                ).authenticationManager(actualUserAuthenticationManager())
+                ).authenticationManager(userAuthenticationManager())
                 .httpBasic(withDefaults());
         return http.build();
     }
 
+    @Bean @Primary
+    public ReactiveAuthenticationManager clientAuthenticationManager() {
+        var manager = new UserDetailsRepositoryReactiveAuthenticationManager(
+                new DefaultClientDetailsService(clientRepository, passwordEncoder)
+        );
+        manager.setPasswordEncoder(passwordEncoder);
+        return manager;
+    }
+
     @Bean
-    public ReactiveAuthenticationManager actualUserAuthenticationManager() {
+    public ReactiveAuthenticationManager userAuthenticationManager() {
         var manager = new UserDetailsRepositoryReactiveAuthenticationManager(
                 new DefaultReactiveUserDetailsService(userRepository)
         );

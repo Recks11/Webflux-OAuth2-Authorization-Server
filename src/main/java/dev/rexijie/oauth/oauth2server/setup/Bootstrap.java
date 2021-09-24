@@ -69,7 +69,7 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
     }
 
     private User defaultUser() {
-        return new User(
+        var user = new User(
                 "rexijie",
                 encoder.encode("password"),
                 "gisBae@rexijie.dev",
@@ -80,6 +80,11 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
                         new Authority(AuthorityEnum.CAN_VIEW)
                 )
         );
+        user.setEnabled(true);
+        user.setAccountNonExpired(true);
+        user.setCredentialsNonExpired(true);
+        user.setAccountNonLocked(true);
+        return user;
     }
 
 }

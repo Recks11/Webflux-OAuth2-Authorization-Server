@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.keys;
+package dev.rexijie.oauth.oauth2server.security.keys;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;

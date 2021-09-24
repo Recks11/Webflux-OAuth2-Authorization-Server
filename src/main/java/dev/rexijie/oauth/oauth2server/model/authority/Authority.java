@@ -22,6 +22,12 @@ public class Authority implements GrantedAuthority {
         this.description = "";
     }
 
+    public Authority(String name, String description) {
+        this.id = UUID.randomUUID().toString();
+        this.name = name;
+        this.description = description;
+    }
+
     public String getId() {
         return id;
     }
