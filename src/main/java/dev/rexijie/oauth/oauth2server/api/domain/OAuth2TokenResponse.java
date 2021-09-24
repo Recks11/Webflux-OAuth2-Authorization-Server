@@ -1,8 +1,12 @@
 package dev.rexijie.oauth.oauth2server.api.domain;
 
-record OAuth2TokenResponse(ClientCredentials accessToken,
-                           ClientCredentials tokenType,
-                           ClientCredentials scope,
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+record OAuth2TokenResponse(String accessToken,
+                           String tokenType,
+                           String scope,
                            int expiresIn,
-                           ClientCredentials refreshToken) {
+                           String refreshToken) {
 }

@@ -7,6 +7,7 @@ import dev.rexijie.oauth.oauth2server.util.TimeUtils;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -100,6 +101,14 @@ public class ClientDTO {
 
     public int getDefaultMaxAge() {
         return defaultMaxAge;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ClientDTO clientDTO = (ClientDTO) o;
+        return getDefaultMaxAge() == clientDTO.getDefaultMaxAge() && Objects.equals(getClientName(), clientDTO.getClientName()) && Objects.equals(getClientType(), clientDTO.getClientType()) && Objects.equals(getScopes(), clientDTO.getScopes()) && Objects.equals(getResourceIds(), clientDTO.getResourceIds()) && Objects.equals(getGrantTypes(), clientDTO.getGrantTypes()) && Objects.equals(getRedirectUris(), clientDTO.getRedirectUris()) && Objects.equals(getAuthorities(), clientDTO.getAuthorities()) && Objects.equals(getClientProfile(), clientDTO.getClientProfile()) && Objects.equals(getLogoUri(), clientDTO.getLogoUri()) && Objects.equals(getClientUri(), clientDTO.getClientUri()) && Objects.equals(getSelectorIdentifierUri(), clientDTO.getSelectorIdentifierUri()) && Objects.equals(getSubjectTypes(), clientDTO.getSubjectTypes());
     }
 
     public static class ClientMapper {

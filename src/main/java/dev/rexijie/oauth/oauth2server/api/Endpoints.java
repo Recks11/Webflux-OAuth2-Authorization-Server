@@ -59,6 +59,7 @@ public class Endpoints {
                         .GET("/introspect", request -> request.principal().flatMap(p -> ServerResponse
                                 .ok()
                                 .bodyValue(p)))
+                        .GET("/check_token", request -> ServerResponse.ok().build())
                 )
                 .build();
     }
@@ -67,7 +68,7 @@ public class Endpoints {
         return route()
                 .path(OAUTH_BASE_PATH, home -> home
                         .POST("/token", request -> ServerResponse.ok().bodyValue(Map.of("uri", "token")))
-                        .GET("/token_key", request -> ServerResponse.ok().bodyValue(Map.of("uri", "token_key")))
+                        .GET("/token_key", tokenHandler::getToken)
                         .GET("/check_token", request -> ServerResponse.ok().bodyValue(Map.of("uri", "check token")))
                 )
                 .build();
