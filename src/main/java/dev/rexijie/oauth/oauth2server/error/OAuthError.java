@@ -57,7 +57,7 @@ public class OAuthError extends RuntimeException implements StatusAwareException
     public enum OAuthErrors {
         INVALID_REQUEST(HttpStatus.BAD_REQUEST, "invalid_request", "The request is missing some parameters"),
         INVALID_CLIENT(HttpStatus.BAD_REQUEST, "invalid_client", "Client authentication failed"),
-        INVALID_GRANT(HttpStatus.BAD_REQUEST, "invalid_grant", "credentials expired"),
+        INVALID_GRANT(HttpStatus.BAD_REQUEST, "invalid_grant", "invalid authorization grant"),
         UNAUTHORIZED_CLIENT(HttpStatus.BAD_REQUEST, "unauthorized_client",
                 "The authenticated client is not authorized to use this authorization grant type"),
         UNSUPPORTED_GRANT_TYPE(HttpStatus.BAD_REQUEST, "unsupported_grant_type",

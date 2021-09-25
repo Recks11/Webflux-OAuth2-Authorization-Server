@@ -18,6 +18,7 @@ public record OAuth2Properties(OAuth2ServerProperties server,
      * OAuth2 Server Properties
      */
     public static record OAuth2ServerProperties(String resourceId,
+                                                String secret,
                                                 boolean implicitEnabled) {
     }
 

@@ -1,5 +1,6 @@
 package dev.rexijie.oauth.oauth2server.api.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -51,17 +52,18 @@ public class AuthorizationRequest {
         this.attributes = attributes;
     }
 
-    public static AuthorizationRequest from(Map<String, Object> paramsMap) {
+    public static AuthorizationRequest from(Map<String, String> paramsMap) {
         final var request = new AuthorizationRequest(
-                paramsMap.getOrDefault("clientId", paramsMap.get("client_id")).toString(),
-                paramsMap.getOrDefault("responseType", paramsMap.get("response_type")).toString(),
-                paramsMap.getOrDefault("grantType", paramsMap.get("grant_type")).toString(),
-                paramsMap.getOrDefault("redirectUri", paramsMap.get("redirect_uri")).toString(),
-                paramsMap.remove("scopes").toString(),
-                paramsMap.remove("nonce").toString(),
-                paramsMap.remove("state").toString()
+                paramsMap.remove("grant_type"),
+                paramsMap.remove("response_type"),
+                paramsMap.remove("client_id"),
+                paramsMap.remove("redirect_uri"),
+                paramsMap.remove("scopes"),
+                paramsMap.remove("nonce"),
+                paramsMap.remove("state")
         );
         request.attributes = new LinkedHashMap<>();
+        request.attributes.putAll(paramsMap);
         return request;
     }
 
@@ -168,6 +170,11 @@ public class AuthorizationRequest {
 
     public Map<String, Object> getAttributes() {
         return attributes;
+    }
+
+    @JsonIgnore
+    public String getAttribute(String name) {
+        return attributes.get(name).toString();
     }
 
     public void setAttributes(Map<String, Object> attributes) {

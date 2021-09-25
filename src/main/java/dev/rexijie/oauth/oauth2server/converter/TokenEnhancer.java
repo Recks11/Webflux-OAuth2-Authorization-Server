@@ -2,7 +2,9 @@ package dev.rexijie.oauth.oauth2server.converter;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2Token;
+import reactor.core.publisher.Mono;
 
 public interface TokenEnhancer {
-    OAuth2AccessToken enhance(OAuth2AccessToken token, Authentication authentication);
+    Mono<OAuth2Token> enhance(OAuth2AccessToken token, Authentication authentication);
 }

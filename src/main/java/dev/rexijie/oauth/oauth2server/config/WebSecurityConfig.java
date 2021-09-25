@@ -42,7 +42,8 @@ public class WebSecurityConfig {
                                 .authenticated()
                 )
                 .authenticationManager(clientAuthenticationManager())
-                .httpBasic(withDefaults());
+                .httpBasic(withDefaults())
+                .csrf(ServerHttpSecurity.CsrfSpec::disable);
         return http.build();
     }
 

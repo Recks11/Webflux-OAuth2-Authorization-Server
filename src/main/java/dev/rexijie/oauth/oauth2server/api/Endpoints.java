@@ -67,8 +67,8 @@ public class Endpoints {
     RouterFunction<ServerResponse> tokenEndpoints(TokenEndpointHandler tokenHandler) {
         return route()
                 .path(OAUTH_BASE_PATH, home -> home
-                        .POST("/token", request -> ServerResponse.ok().bodyValue(Map.of("uri", "token")))
-                        .GET("/token_key", tokenHandler::getToken)
+                        .POST("/token", tokenHandler::getToken)
+                        .GET("/token_key", tokenHandler::getTokenKey)
                         .GET("/check_token", request -> ServerResponse.ok().bodyValue(Map.of("uri", "check token")))
                 )
                 .build();

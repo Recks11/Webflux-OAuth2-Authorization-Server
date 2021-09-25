@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * Authentication filter for the API endpoint and literally anything else
  */
-@Component
+//@Component
 public class ApiEndpointAuthenticationFilter implements WebFilter {
 
     private final ObjectMapper objectMapper;
