@@ -10,14 +10,12 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
+ * The Authentication converter is responsible for extracting the authentication from requests (to the best of my understanding)
  * Authentication converter that returns a token other than the default UsernamePasswordAuthenticationToken
  * gotten from {@link org.springframework.security.web.server.authentication.ServerHttpBasicAuthenticationConverter}
- *
  */
 
 public class AuthenticationServerAuthenticationConverter implements ServerAuthenticationConverter {
-    public static final String BASIC = "Basic ";
-
     private final ServerAuthenticationConverter basicAuthDelegate = new ServerHttpBasicAuthenticationConverter();
 
     @Override

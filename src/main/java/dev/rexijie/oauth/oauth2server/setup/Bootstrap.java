@@ -12,6 +12,7 @@ import dev.rexijie.oauth.oauth2server.util.TimeUtils;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -43,7 +44,7 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
         return new Client(
                 "client-001",
                 "Test client",
-                ClientTypes.PUBLIC.toString(),
+                ClientTypes.CONFIDENTIAL.getName(),
                 ClientProfiles.WEB.toString(),
                 "test-client",
                 encoder.encode("secret"),
@@ -60,7 +61,7 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
                 null,
                 "http://localhost:8080/meta/redirects.json",
                 "",
-                null,
+                ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue(),
                 900,
                 false,
                 TimeUtils.localDateTimeToEpochSecond(LocalDateTime.now()),
