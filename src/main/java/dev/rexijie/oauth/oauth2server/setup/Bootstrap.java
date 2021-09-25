@@ -52,7 +52,7 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
                 Set.of("authorization_code", "implicit"),
                 Set.of("http://localhost:8081/oauth/code"),
                 Set.of("USER", "ADMIN"),
-                36,
+                900,
                 3600,
                 Map.of(),
                 "http://localhost:8080/favicon.png",
@@ -61,7 +61,7 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
                 "http://localhost:8080/meta/redirects.json",
                 "",
                 null,
-                3600,
+                900,
                 false,
                 TimeUtils.localDateTimeToEpochSecond(LocalDateTime.now()),
                 TimeUtils.localDateTimeToEpochSecond(LocalDateTime.now())

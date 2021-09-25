@@ -1,5 +1,6 @@
 package dev.rexijie.oauth.oauth2server.token;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -17,6 +18,7 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
     private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
     private final Object principal;
     private Object credentials;
+    @JsonIgnore
     private OAuth2AuthorizationRequest authorizationRequest;
 
     public OAuth2Authentication(Object principal, Object credentials) {
@@ -64,10 +66,12 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
         this.authorizationRequest = authorizationRequest;
     }
 
+    @JsonIgnore
     public AuthorizationRequest getStoredRequest() {
         return getAuthorizationRequest().storedRequest();
     }
 
+    @JsonIgnore
     public Object getUserPrincipal() {
         return getAuthorizationRequest().authentication();
     }
