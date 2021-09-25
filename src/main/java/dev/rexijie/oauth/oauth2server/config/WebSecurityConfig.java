@@ -1,5 +1,6 @@
 package dev.rexijie.oauth.oauth2server.config;
 
+import dev.rexijie.oauth.oauth2server.auth.ClientDetailsRepositoryReactiveAuthenticationManager;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
 import dev.rexijie.oauth.oauth2server.services.DefaultClientDetailsService;
@@ -62,7 +63,7 @@ public class WebSecurityConfig {
 
     @Bean @Primary
     public ReactiveAuthenticationManager clientAuthenticationManager() {
-        var manager = new UserDetailsRepositoryReactiveAuthenticationManager(
+        var manager = new ClientDetailsRepositoryReactiveAuthenticationManager(
                 new DefaultClientDetailsService(clientRepository, passwordEncoder)
         );
         manager.setPasswordEncoder(passwordEncoder);

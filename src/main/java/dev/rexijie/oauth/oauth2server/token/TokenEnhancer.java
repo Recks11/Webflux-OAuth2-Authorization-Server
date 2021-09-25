@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.converter;
+package dev.rexijie.oauth.oauth2server.token;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;

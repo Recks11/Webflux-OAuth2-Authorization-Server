@@ -1,16 +1,15 @@
 package dev.rexijie.oauth.oauth2server.services;
 
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
-import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.RefreshTokenRequest;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
-import dev.rexijie.oauth.oauth2server.converter.TokenEnhancer;
-import dev.rexijie.oauth.oauth2server.model.ClientUserDetails;
+import dev.rexijie.oauth.oauth2server.model.Client;
+import dev.rexijie.oauth.oauth2server.model.User;
+import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
+import dev.rexijie.oauth.oauth2server.token.TokenEnhancer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.token.KeyBasedPersistenceTokenService;
-import org.springframework.security.core.token.SecureRandomFactoryBean;
 import org.springframework.security.core.token.TokenService;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -28,52 +27,39 @@ public class DefaultTokenServices implements TokenServices {
 
     private final ClientService clientService;
     private final TokenService tokenService;
-    private final OAuth2Properties.OAuth2ServerProperties oAuth2Properties;
 
     public DefaultTokenServices(ClientService clientService,
-                                OAuth2Properties oAuth2Properties) {
+                                OAuth2Properties oAuth2Properties,
+                                TokenService tokenService) {
         this.clientService = clientService;
-        this.oAuth2Properties = oAuth2Properties.server();
-        this.tokenService = tryEnhanceTokenService();
+        this.tokenService = tokenService;
     }
 
-    TokenService tryEnhanceTokenService() {
-        try {
-            var secureRandom = new SecureRandomFactoryBean().getObject();
-            var toS = new KeyBasedPersistenceTokenService();
-            toS.setSecureRandom(secureRandom);
-            toS.setServerInteger(oAuth2Properties.hashCode());
-            return toS;
-        } catch (Exception ex) {
-            LOG.error("Error enhancing tokenService: {}", ex.getMessage());
-            return new KeyBasedPersistenceTokenService();
-        }
-    }
+
 
     /**
      * Create an access token from an authenticated client provided an authorization request
      *
      * @param authentication       client authentication
-     * @param authorizationRequest authorization request including the user authentication
      */
     @Override
-    public Mono<OAuth2Token> createAccessToken(Authentication authentication,
-                                               OAuth2AuthorizationRequest authorizationRequest) {
-        var clientDetails = (ClientUserDetails) authentication.getPrincipal();
-        var clientMetaData = clientDetails.clientData();
+    public Mono<OAuth2Token> createAccessToken(Authentication authentication) {
+        var auth2Authentication = (OAuth2Authentication) authentication;
+        var authorizationRequest = auth2Authentication.getAuthorizationRequest();
+        var clientMetaData = (Client) authentication.getDetails();
 
-        if (!clientMetaData.scopes().containsAll(authorizationRequest.storedRequest().getScopes()))
+        if (!clientMetaData.scopes().containsAll(auth2Authentication.getStoredRequest().getScopes()))
             return Mono.error(INVALID_SCOPE_ERROR);
 
-        String username = authorizationRequest.authentication().getName();
+        Authentication userAuthentication = authorizationRequest.authentication();
 
-        var tokenId = tokenService.allocateToken(username).getKey();
+        var tokenId = tokenService.allocateToken(generateTokenAdditionalInformation(userAuthentication)).getKey();
 
         var token = new OAuth2AccessToken(BEARER,
                 tokenId,
                 Instant.now(),
                 Instant.now().plusSeconds(clientMetaData.accessTokenValidity()),
-                authorizationRequest.storedRequest().getScopes()); // TODO (modify to get scopes a user can have?)
+                auth2Authentication.getStoredRequest().getScopes()); // TODO (modify to get scopes a user can have?)
 
         return getTokenEnhancer().enhance(token, authentication);
     }
@@ -82,12 +68,17 @@ public class DefaultTokenServices implements TokenServices {
     public Mono<OAuth2Token> refreshAccessToken(RefreshToken token, RefreshTokenRequest request) {
         // read authentication from access token,
         // use it to regenerate token
-        return null;
+        return Mono.empty();
     }
 
     @Override
     public Mono<OAuth2Token> getAccessToken(Authentication authentication) {
         return Mono.empty();
+    }
+
+    private String generateTokenAdditionalInformation(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return "username=%s".formatted(user.getUsername());
     }
 
     protected TokenEnhancer getTokenEnhancer() {
