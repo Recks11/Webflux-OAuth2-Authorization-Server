@@ -5,12 +5,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public record ClientUserDetails(String username,
                                 String password,
-                                List<Authority> authorities,
+                                Set<Authority> authorities,
                                 Client clientData) implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -50,7 +50,7 @@ public record ClientUserDetails(String username,
     public ClientUserDetails(Client clientData) {
         this(clientData.clientId(),
                 clientData.clientSecret(),
-                clientData.authorities().stream().map(Authority::new).collect(Collectors.toList()),
+                clientData.authorities().stream().map(Authority::new).collect(Collectors.toSet()),
                 clientData);
     }
 }
