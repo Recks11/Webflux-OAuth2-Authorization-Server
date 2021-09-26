@@ -41,7 +41,11 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 .notBefore(token.getIssuedAt())
                 .audience(Set.of("{client_id}")) // or resource id if available
                 .build();
-        return null;
+        return Mono.just(token);
+    }
+
+    private void signToken() {
+
     }
 
     private Map<String, String> extractAdditionalInformationFromToken(String value) {

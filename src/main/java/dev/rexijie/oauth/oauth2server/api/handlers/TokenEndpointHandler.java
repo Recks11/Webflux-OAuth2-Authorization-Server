@@ -1,7 +1,6 @@
 package dev.rexijie.oauth.oauth2server.api.handlers;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2TokenResponse;
 import dev.rexijie.oauth.oauth2server.token.granter.TokenGranter;
 import org.slf4j.Logger;
@@ -12,13 +11,12 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 @Component
-public class TokenEndpointHandler extends ApiEndpointHandler {
+public class TokenEndpointHandler extends OAuthEndpointHandler {
     private static final Logger LOG = LoggerFactory.getLogger(TokenEndpointHandler.class);
     private final ReactiveAuthenticationManager authenticationManager;
     private final TokenGranter tokenGranter;
@@ -50,14 +48,6 @@ public class TokenEndpointHandler extends ApiEndpointHandler {
         return ServerResponse.ok()
                 .cacheControl(CacheControl.noCache())
                 .bodyValue(jwkSet.toJSONObject());
-    }
-
-    private Mono<AuthorizationRequest> extractAuthorizationRequest(ServerRequest request) {
-        return request.formData()
-                .switchIfEmpty(Mono.just(request.queryParams()))
-                .map(MultiValueMap::toSingleValueMap)
-                .map(AuthorizationRequest::from)
-                .doOnNext(authorizationRequest -> LOG.info("converted to authorization request: {}", authorizationRequest));
     }
 
 }

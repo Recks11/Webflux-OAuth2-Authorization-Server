@@ -6,7 +6,6 @@ import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
 import dev.rexijie.oauth.oauth2server.services.DefaultClientDetailsService;
 import dev.rexijie.oauth.oauth2server.services.DefaultReactiveUserDetailsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -19,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
-import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -48,8 +46,10 @@ public class WebSecurityConfig {
                 .httpBasic().disable()
                 .csrf().disable();
         http
+                .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/oauth/**"))
                 .authorizeExchange(exchanges ->
                         exchanges
+                                .pathMatchers("/oauth/authorize").permitAll()
                                 .anyExchange()
                                 .authenticated()
                 ).authenticationManager(clientAuthenticationManager())
