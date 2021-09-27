@@ -10,11 +10,61 @@ import java.util.Objects;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record OAuth2TokenResponse(String accessToken,
-                                  String tokenType,
-                                  String scope,
-                                  long expiresIn,
-                                  String refreshToken) {
+public class OAuth2TokenResponse {
+    private String accessToken;
+    private String tokenType;
+    private String scope;
+    private long expiresIn;
+    private String refreshToken;
+
+    public OAuth2TokenResponse(String accessToken, String tokenType, String scope, long expiresIn, String refreshToken) {
+        this.accessToken = accessToken;
+        this.tokenType = tokenType;
+        this.scope = scope;
+        this.expiresIn = expiresIn;
+        this.refreshToken = refreshToken;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getTokenType() {
+        return tokenType;
+    }
+
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
+    }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public long getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(long expiresIn) {
+        this.expiresIn = expiresIn;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
     public static OAuth2TokenResponse fromAccessToken(OAuth2AccessToken accessToken) {
         return new OAuth2TokenResponse(accessToken.getTokenValue(),
                 accessToken.getTokenType().getValue(),

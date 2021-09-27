@@ -7,6 +7,6 @@ import reactor.core.publisher.Mono;
 
 public interface TokenGranter {
 
-    boolean canGrantToken(AuthorizationRequest request);
+    Mono<Void> validateRequest(AuthorizationRequest request);
     Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest);
 }

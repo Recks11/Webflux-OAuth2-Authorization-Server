@@ -49,7 +49,6 @@ public class WebSecurityConfig {
                 .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/oauth/**"))
                 .authorizeExchange(exchanges ->
                         exchanges
-                                .pathMatchers("/oauth/authorize").permitAll()
                                 .anyExchange()
                                 .authenticated()
                 ).authenticationManager(clientAuthenticationManager())
@@ -71,6 +70,7 @@ public class WebSecurityConfig {
                                 .anyExchange()
                                 .authenticated()
                 ).authenticationManager(userAuthenticationManager())
+                .csrf().disable()
                 .httpBasic(withDefaults());
         return http.build();
     }

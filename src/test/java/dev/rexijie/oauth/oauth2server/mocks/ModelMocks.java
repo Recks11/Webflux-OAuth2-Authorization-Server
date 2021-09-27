@@ -11,17 +11,21 @@ import dev.rexijie.oauth.oauth2server.util.TimeUtils;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 public class ModelMocks {
     public static Client testClient() {
+        return testClient("secret");
+    }
+    public static Client testClient(String secret) {
         return new Client(
-                null,
+                UUID.randomUUID().toString(),
                 "Test client",
                 ClientTypes.PUBLIC.toString(),
                 ClientProfiles.WEB.toString(),
-                null,
-                null,
-                Set.of("read"),
+                "test-client",
+                secret,
+                Set.of("read","write","read:profile"),
                 Set.of("OAuthServer"),
                 Set.of("authorization_code", "implicit"),
                 Set.of("http://localhost:8081/oauth/code"),
@@ -42,10 +46,13 @@ public class ModelMocks {
         );
     }
 
-    private User testUser() {
+    public static User testUser() {
+        return testUser("encoded-password");
+    }
+    public static User testUser(String password) {
         return new User(
                 "rexijie",
-                "encoded_password",
+                password,
                 "gisBae@rexijie.dev",
                 Set.of(new Authority("ADMIN"),
                         new Authority(AuthorityEnum.CAN_CREATE),

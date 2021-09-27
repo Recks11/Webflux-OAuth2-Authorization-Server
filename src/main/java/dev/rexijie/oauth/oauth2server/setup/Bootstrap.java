@@ -11,16 +11,17 @@ import dev.rexijie.oauth.oauth2server.repository.UserRepository;
 import dev.rexijie.oauth.oauth2server.util.TimeUtils;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
 @Component
+@Profile("dev")
 public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
     private final ClientRepository clientRepository;
     private final UserRepository userRepository;

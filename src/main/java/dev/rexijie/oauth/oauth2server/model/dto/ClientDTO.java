@@ -1,6 +1,8 @@
 package dev.rexijie.oauth.oauth2server.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import dev.rexijie.oauth.oauth2server.api.domain.ClientCredentials;
 import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.util.TimeUtils;
@@ -11,6 +13,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ClientDTO {
     private String clientName;
     private String clientType;

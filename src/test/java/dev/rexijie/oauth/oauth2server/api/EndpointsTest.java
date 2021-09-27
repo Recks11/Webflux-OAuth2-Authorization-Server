@@ -1,0 +1,18 @@
+package dev.rexijie.oauth.oauth2server.api;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+
+
+class EndpointsTest extends ApiTest {
+
+    @Test
+    void whenGetIndexPage_thenSuccess() {
+        apiClient()
+                .get()
+                .uri("/login")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML);
+    }
+}

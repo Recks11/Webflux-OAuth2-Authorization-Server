@@ -14,7 +14,7 @@ public class AuthorizationRequest {
     private String responseType;
     private String clientId;
     private String redirectUri;
-    private Set<String> scopes;
+    private Set<String> scopes = new HashSet<>();
     private String nonce;
     private String state;
     private String prompt;
@@ -32,7 +32,8 @@ public class AuthorizationRequest {
         this.responseType = responseType;
         this.clientId = clientId;
         this.redirectUri = redirectUri;
-        this.scopes = new HashSet<>(Arrays.asList(scopes.split(" ")));
+        if (scopes != null)
+            this.scopes = new HashSet<>(Arrays.asList(scopes.split(" ")));
         this.nonce = nonce;
         this.state = state;
     }
@@ -105,7 +106,6 @@ public class AuthorizationRequest {
 
     public void setScope(String scopes) {
         this.scopes = new HashSet<>(Arrays.asList(scopes.split(" ")));
-        ;
     }
 
     public String getNonce() {
@@ -204,5 +204,24 @@ public class AuthorizationRequest {
                 getIncludeGrantedScopes(), getResponseMode(),
                 getCode_challenge(), getCode_challenge_method(),
                 getAttributes());
+    }
+
+    @Override
+    public String toString() {
+        return "AuthorizationRequest {" +
+                "grantType='" + grantType + '\'' +
+                ", responseType='" + responseType + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", redirectUri='" + redirectUri + '\'' +
+                ", scopes=" + scopes +
+                ", nonce='" + nonce + '\'' +
+                ", state='" + state + '\'' +
+                ", prompt='" + prompt + '\'' +
+                ", includeGrantedScopes='" + includeGrantedScopes + '\'' +
+                ", responseMode='" + responseMode + '\'' +
+                ", code_challenge='" + code_challenge + '\'' +
+                ", code_challenge_method='" + code_challenge_method + '\'' +
+                ", attributes=" + attributes +
+                '}';
     }
 }

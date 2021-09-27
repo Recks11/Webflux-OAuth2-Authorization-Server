@@ -32,7 +32,8 @@ public class TokenEndpointHandler extends OAuthEndpointHandler {
     }
 
     public Mono<ServerResponse> getToken(ServerRequest request) {
-        return extractAuthorizationRequest(request) // extract authentication request
+        return extractAuthorizationFromBody(request) // extract authentication request
+                .switchIfEmpty(extractAuthorizationFromParams(request))
                 .flatMap(authorizationRequest -> request.principal() // get authenticated client credentials from request
                         .flatMap(principal -> tokenGranter.grantToken((Authentication) principal, authorizationRequest) // grant token
                                 .cast(OAuth2AccessToken.class)) // cast to OAuth2AccessToken class

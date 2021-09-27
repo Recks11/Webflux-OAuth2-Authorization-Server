@@ -3,16 +3,18 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
-import dev.rexijie.oauth.oauth2server.model.ClientUserDetails;
 import dev.rexijie.oauth.oauth2server.services.TokenServices;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
+
+import static dev.rexijie.oauth.oauth2server.error.OAuthError.INVALID_SCOPE_ERROR;
 
 public class ResourceOwnerPasswordCredentialsTokenGranter implements TokenGranter {
 
@@ -26,8 +28,10 @@ public class ResourceOwnerPasswordCredentialsTokenGranter implements TokenGrante
     }
 
     @Override
-    public boolean canGrantToken(AuthorizationRequest request) {
-        return AuthorizationGrantType.PASSWORD.equals(new AuthorizationGrantType(request.getGrantType()));
+    public Mono<Void> validateRequest(AuthorizationRequest request) {
+        if (!AuthorizationGrantType.PASSWORD.equals(new AuthorizationGrantType(request.getGrantType())))
+            return Mono.error(INVALID_SCOPE_ERROR);
+        return Mono.empty();
     }
 
     @Override
@@ -37,11 +41,14 @@ public class ResourceOwnerPasswordCredentialsTokenGranter implements TokenGrante
                 authorizationRequest.getAttribute("password")
         );
 
-        return authenticationManager.authenticate(usernameAndPasswordToken)
-                .map(returnedAuth -> new OAuth2AuthorizationRequest(authorizationRequest, returnedAuth))
-                .doOnError(throwable -> {throw Exceptions.propagate(throwable);})
-                .map(oAuth2AuthorizationRequest -> createAuthenticationToken(authentication, oAuth2AuthorizationRequest))
-                .flatMap(tokenServices::createAccessToken);
+        return validateRequest(authorizationRequest)
+                .then(authenticationManager.authenticate(usernameAndPasswordToken)
+                        .map(returnedAuth -> new OAuth2AuthorizationRequest(authorizationRequest, returnedAuth))
+                        .doOnError(throwable -> {
+                            throw Exceptions.propagate(throwable);
+                        })
+                        .map(oAuth2AuthorizationRequest -> createAuthenticationToken(authentication, oAuth2AuthorizationRequest))
+                        .flatMap(tokenServices::createAccessToken));
     }
 
     private OAuth2Authentication createAuthenticationToken(Authentication authentication,
