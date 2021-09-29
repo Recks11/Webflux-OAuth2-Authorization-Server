@@ -1,7 +1,8 @@
 package dev.rexijie.oauth.oauth2server.config;
 
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationServerAuthenticationConverter;
-import dev.rexijie.oauth.oauth2server.auth.ClientDetailsRepositoryReactiveAuthenticationManager;
+import dev.rexijie.oauth.oauth2server.auth.manager.ReactiveClientAuthenticationManager;
+import dev.rexijie.oauth.oauth2server.auth.manager.ReactiveUserAuthenticationManager;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
 import dev.rexijie.oauth.oauth2server.services.DefaultClientDetailsService;
@@ -10,13 +11,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
+import org.springframework.security.web.server.authentication.RedirectServerAuthenticationFailureHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
 
@@ -40,6 +41,7 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityWebFilterChain apiHttpSecurity(ServerHttpSecurity http) {
+        // TODO configure auth entrypoint
         http
                 .logout().disable()
                 .formLogin().disable()
@@ -56,6 +58,7 @@ public class WebSecurityConfig {
 
         var authWebFilter = new AuthenticationWebFilter(clientAuthenticationManager());
         authWebFilter.setServerAuthenticationConverter(new AuthenticationServerAuthenticationConverter());
+        authWebFilter.setAuthenticationFailureHandler(new RedirectServerAuthenticationFailureHandler("/login"));
 
         http.addFilterAt(authWebFilter, SecurityWebFiltersOrder.HTTP_BASIC);
         return http.build();
@@ -78,7 +81,7 @@ public class WebSecurityConfig {
     @Bean
     @Primary
     public ReactiveAuthenticationManager clientAuthenticationManager() {
-        var manager = new ClientDetailsRepositoryReactiveAuthenticationManager(
+        var manager = new ReactiveClientAuthenticationManager(
                 new DefaultClientDetailsService(clientRepository, passwordEncoder)
         );
         manager.setPasswordEncoder(passwordEncoder);
@@ -87,7 +90,7 @@ public class WebSecurityConfig {
 
     @Bean
     public ReactiveAuthenticationManager userAuthenticationManager() {
-        var manager = new UserDetailsRepositoryReactiveAuthenticationManager(
+        var manager = new ReactiveUserAuthenticationManager(
                 new DefaultReactiveUserDetailsService(userRepository)
         );
         manager.setPasswordEncoder(passwordEncoder);

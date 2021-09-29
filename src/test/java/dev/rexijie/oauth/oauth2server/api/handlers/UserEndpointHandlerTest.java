@@ -1,16 +1,14 @@
 package dev.rexijie.oauth.oauth2server.api.handlers;
 
-import dev.rexijie.oauth.oauth2server.api.ApiTest;
-import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
+import dev.rexijie.oauth.oauth2server.api.OAuthTest;
 import dev.rexijie.oauth.oauth2server.model.dto.UserDTO;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.testClient;
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.testUser;
-import static org.junit.jupiter.api.Assertions.*;
 
-class UserEndpointHandlerTest extends ApiTest {
+class UserEndpointHandlerTest extends OAuthTest {
 
     @Test
     void whenCreateUserWithValidUser_thenSuccess() {

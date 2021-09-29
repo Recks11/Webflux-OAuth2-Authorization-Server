@@ -1,6 +1,7 @@
-package dev.rexijie.oauth.oauth2server.auth;
+package dev.rexijie.oauth.oauth2server.auth.manager;
 
-import dev.rexijie.oauth.oauth2server.model.ClientUserDetails;
+import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
+import dev.rexijie.oauth.oauth2server.model.User;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.springframework.security.authentication.AbstractUserDetailsReactiveAuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -8,18 +9,18 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import reactor.core.publisher.Mono;
 
-public class ClientDetailsRepositoryReactiveAuthenticationManager extends AbstractUserDetailsReactiveAuthenticationManager {
+public class ReactiveUserAuthenticationManager extends AbstractUserDetailsReactiveAuthenticationManager {
 
-    private final ReactiveUserDetailsService clientDetailsService;
+    private final ReactiveUserDetailsService userDetailsService;
 
-    public ClientDetailsRepositoryReactiveAuthenticationManager(ReactiveUserDetailsService clientDetailsService) {
-        this.clientDetailsService = clientDetailsService;
+    public ReactiveUserAuthenticationManager(ReactiveUserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
     }
 
 
     @Override
     protected Mono<UserDetails> retrieveUser(String clientId) {
-        return this.clientDetailsService.findByUsername(clientId);
+        return this.userDetailsService.findByUsername(clientId);
     }
 
     @Override
@@ -29,12 +30,14 @@ public class ClientDetailsRepositoryReactiveAuthenticationManager extends Abstra
     }
 
     private OAuth2Authentication convertTokenToOAuth2Token(Authentication authentication) {
-        ClientUserDetails clientUserDetails = (ClientUserDetails) authentication.getPrincipal();
-        OAuth2Authentication auth = new OAuth2Authentication(clientUserDetails.clientData().clientId(),
-                authentication.getCredentials(),
+        User user = (User) authentication.getPrincipal();
+        user.setPassword(null);
+        OAuth2Authentication auth = new OAuth2Authentication(user.getUsername(),
+                "[YOU THOUGHT]",
                 authentication.getAuthorities());
         auth.setAuthenticated(authentication.isAuthenticated());
-        auth.setDetails(clientUserDetails.clientData());
+        auth.setAuthenticationStage(AuthenticationStage.COMPLETE);
+        auth.setDetails(user);
         return auth;
     }
 

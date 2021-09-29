@@ -6,7 +6,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.CacheControl;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
-import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import java.util.Map;
@@ -66,6 +65,10 @@ public class Endpoints {
                 .path(OAUTH_BASE_PATH, home -> home
                         .GET("/authorize", authorizationEndpointHandler::initiateAuthorization)
                         .POST("/authorize", authorizationEndpointHandler::authorizeRequest)
+                        .path("/approve", approve -> approve
+                                .GET( authorizationEndpointHandler::approvalPage)
+                                .POST( authorizationEndpointHandler::approve)
+                        )
                 )
                 .build();
     }

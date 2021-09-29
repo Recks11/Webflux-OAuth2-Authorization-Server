@@ -62,8 +62,8 @@ public class OAuthError extends RuntimeException implements StatusAwareException
                 "The authenticated client is not authorized to use this authorization grant type"),
         UNSUPPORTED_GRANT_TYPE(HttpStatus.BAD_REQUEST, "unsupported_grant_type",
                 "The authorization grant type is not supported by the authorization server."),
-        INVALID_SCOPE(HttpStatus.BAD_REQUEST, "invalid_scope", "requested scope is invalid");
-
+        INVALID_SCOPE(HttpStatus.BAD_REQUEST, "invalid_scope", "requested scope is invalid"),
+        MODIFIED_REQUEST(HttpStatus.BAD_REQUEST, "invalid_request", "the request has been modified");
 
         private final int status;
         private final String error;

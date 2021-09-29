@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 
-class EndpointsTest extends ApiTest {
+class EndpointsTest extends OAuthTest {
 
     @Test
     void whenGetIndexPage_thenSuccess() {

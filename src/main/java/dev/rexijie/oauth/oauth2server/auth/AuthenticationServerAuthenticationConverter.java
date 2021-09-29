@@ -1,13 +1,17 @@
 package dev.rexijie.oauth.oauth2server.auth;
 
+import dev.rexijie.oauth.oauth2server.model.Client;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import org.springframework.security.web.server.authentication.ServerHttpBasicAuthenticationConverter;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 /**
  * The Authentication converter is responsible for extracting the authentication from requests (to the best of my understanding)
@@ -16,10 +20,19 @@ import reactor.core.publisher.Mono;
  */
 
 public class AuthenticationServerAuthenticationConverter implements ServerAuthenticationConverter {
-    private final ServerAuthenticationConverter basicAuthDelegate = new ServerHttpBasicAuthenticationConverter();
+    private final Map<ClientAuthenticationMethod, ServerAuthenticationConverter> converterMap = Map.of(
+            ClientAuthenticationMethod.CLIENT_SECRET_BASIC, new ServerHttpBasicAuthenticationConverter()
+    );
+
+//    private final ReactiveClientAuthenticationMethodResolver clientAuthenticationMethodResolver =
+//            new DefaultClientAuthenticationMethodResolver();
 
     @Override
     public Mono<Authentication> convert(ServerWebExchange exchange) {
+//        clientAuthenticationMethodResolver.resolveClientAuthenticationMethod(exchange)
+//                .map(converterMap::get)
+//                .flatMap(serverAuthenticationConverter -> serverAuthenticationConverter.convert(exchange));
+
         ServerHttpRequest request = exchange.getRequest();
         String authorization = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
@@ -30,6 +43,6 @@ public class AuthenticationServerAuthenticationConverter implements ServerAuthen
     }
 
     private Mono<Authentication> handleBasicAuth(ServerWebExchange exchange) {
-        return basicAuthDelegate.convert(exchange);
+        return converterMap.get(ClientAuthenticationMethod.CLIENT_SECRET_BASIC).convert(exchange);
     }
 }

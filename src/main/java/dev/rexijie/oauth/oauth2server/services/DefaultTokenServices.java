@@ -10,6 +10,7 @@ import dev.rexijie.oauth.oauth2server.token.TokenEnhancer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.token.Token;
 import org.springframework.security.core.token.TokenService;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -45,23 +46,20 @@ public class DefaultTokenServices implements TokenServices {
     @Override
     public Mono<OAuth2Token> createAccessToken(Authentication authentication) {
         var auth2Authentication = (OAuth2Authentication) authentication;
-        var authorizationRequest = auth2Authentication.getAuthorizationRequest();
         var clientMetaData = (Client) authentication.getDetails();
 
         if (!clientMetaData.scopes().containsAll(auth2Authentication.getStoredRequest().getScopes()))
             return Mono.error(INVALID_SCOPE_ERROR);
 
-        Authentication userAuthentication = authorizationRequest.authentication();
+        Token token = generateToken(authentication);
 
-        var tokenId = tokenService.allocateToken(generateTokenAdditionalInformation(userAuthentication)).getKey();
-
-        var token = new OAuth2AccessToken(BEARER,
-                tokenId,
+        var oauthToken = new OAuth2AccessToken(BEARER,
+                token.getKey(),
                 Instant.now(),
                 Instant.now().plusSeconds(clientMetaData.accessTokenValidity()),
                 auth2Authentication.getStoredRequest().getScopes()); // TODO (modify to get scopes a user can have?)
 
-        return getTokenEnhancer().enhance(token, authentication);
+        return getTokenEnhancer().enhance(oauthToken, authentication);
     }
 
     @Override
@@ -83,5 +81,13 @@ public class DefaultTokenServices implements TokenServices {
 
     protected TokenEnhancer getTokenEnhancer() {
         return (token, auth) -> Mono.just(token);
+    }
+
+    private Token generateToken(Authentication authentication) {
+        var auth2Authentication = (OAuth2Authentication) authentication;
+        var authorizationRequest = auth2Authentication.getAuthorizationRequest();
+        Authentication userAuthentication = authorizationRequest.authentication();
+
+        return tokenService.allocateToken(generateTokenAdditionalInformation(userAuthentication));
     }
 }

@@ -1,7 +1,6 @@
 package dev.rexijie.oauth.oauth2server.api.handlers;
 
-import dev.rexijie.oauth.oauth2server.api.ApiTest;
-import dev.rexijie.oauth.oauth2server.api.domain.ClientCredentials;
+import dev.rexijie.oauth.oauth2server.api.OAuthTest;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -10,9 +9,8 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.testClient;
-import static org.junit.jupiter.api.Assertions.*;
 
-class ClientEndpointHandlerTest extends ApiTest {
+class ClientEndpointHandlerTest extends OAuthTest {
 
     @Test
     void whenCreateClientWithValidClient_thenSuccess() {

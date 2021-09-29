@@ -1,0 +1,209 @@
+{
+  "type": "record",
+  "name": "OAuth2ApprovalAuthorizationToken",
+  "namespace": "dev.rexijie.oauth.oauth2server.token",
+  "fields": [
+    {
+      "name": "approvalMap",
+      "type": [
+        "null",
+        {
+          "type": "map",
+          "values": "boolean"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "approvalTokenId",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "authorizationRequest",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "AuthorizationRequest",
+          "namespace": "dev.rexijie.oauth.oauth2server.api.domain",
+          "fields": [
+            {
+              "name": "attributes",
+              "type": [
+                "null",
+                {
+                  "type": "map",
+                  "values": {
+                    "type": "record",
+                    "name": "Object",
+                    "namespace": "java.lang",
+                    "fields": []
+                  }
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "clientId",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "code_challenge",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "code_challenge_method",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "grantType",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "includeGrantedScopes",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "nonce",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "prompt",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "redirectUri",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "responseMode",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "responseType",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "scopes",
+              "type": [
+                "null",
+                {
+                  "type": "array",
+                  "items": "string",
+                  "java-class": "java.util.Set"
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "state",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            }
+          ]
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "authorizedClientId",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "credentials",
+      "type": [
+        "null",
+        "java.lang.Object"
+      ],
+      "default": null
+    },
+    {
+      "name": "principal",
+      "type": [
+        "null",
+        "java.lang.Object"
+      ],
+      "default": null
+    },
+    {
+      "name": "authenticated",
+      "type": "boolean"
+    },
+    {
+      "name": "authorities",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "GrantedAuthority",
+            "namespace": "org.springframework.security.core",
+            "fields": []
+          },
+          "java-class": "java.util.Collection"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "details",
+      "type": [
+        "null",
+        "java.lang.Object"
+      ],
+      "default": null
+    }
+  ]
+}

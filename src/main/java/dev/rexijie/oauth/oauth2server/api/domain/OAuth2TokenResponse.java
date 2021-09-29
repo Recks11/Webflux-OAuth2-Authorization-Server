@@ -5,12 +5,13 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OAuth2TokenResponse {
+public class OAuth2TokenResponse implements Serializable {
     private String accessToken;
     private String tokenType;
     private String scope;

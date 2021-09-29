@@ -1,23 +1,24 @@
 package dev.rexijie.oauth.oauth2server.auth;
 
-import dev.rexijie.oauth.oauth2server.model.Client;
+import dev.rexijie.oauth.oauth2server.model.ClientUserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import static org.springframework.security.oauth2.core.ClientAuthenticationMethod.*;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
+import static org.springframework.security.oauth2.core.ClientAuthenticationMethod.NONE;
 
 
 public class DefaultClientAuthenticationMethodResolver implements ReactiveClientAuthenticationMethodResolver {
-    Map<String, ClientAuthenticationMethod> clientAuthenticationMethodMap = Map.of(
-            CLIENT_SECRET_BASIC.getValue(), CLIENT_SECRET_BASIC,
-            CLIENT_SECRET_JWT.getValue(), CLIENT_SECRET_JWT,
-            CLIENT_SECRET_POST.getValue(), CLIENT_SECRET_POST,
-            PRIVATE_KEY_JWT.getValue(), PRIVATE_KEY_JWT
-    );
+
     @Override
-    public Mono<ClientAuthenticationMethod> resolveClientAuthenticationMethod(Client client) {
-        return Mono.just(clientAuthenticationMethodMap.get(client.tokenEndpointAuthMethod()))
+    public Mono<ClientAuthenticationMethod> resolveClientAuthenticationMethod(ServerWebExchange exchange) {
+        return exchange.getPrincipal()
+                .cast(Authentication.class)
+                .map(Authentication::getDetails)
+                .cast(ClientUserDetails.class)
+                .map(clientUserDetails -> new ClientAuthenticationMethod(
+                        clientUserDetails.clientData().tokenEndpointAuthMethod()))
                 .switchIfEmpty(Mono.just(NONE));
     }
 }

@@ -20,8 +20,7 @@ public class LoginAndApprovalHandler extends OAuthEndpointHandler {
                 .bodyValue(index);
     }
 
-    @Override
-    public Mono<ServerResponse> redirectToLogin() {
-        return super.redirectToLogin();
+    public Mono<ServerResponse> redirectToLogin(ServerRequest request) {
+        return super.redirectTo(request, "/login");
     }
 }

@@ -1,6 +1,7 @@
 package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.services.TokenServices;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
@@ -15,6 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static dev.rexijie.oauth.oauth2server.error.OAuthError.INVALID_SCOPE_ERROR;
+import static dev.rexijie.oauth.oauth2server.error.OAuthError.OAuthErrors.UNSUPPORTED_GRANT_TYPE;
 
 @Component
 public class CompositeTokenGranter implements TokenGranter {
@@ -31,7 +33,8 @@ public class CompositeTokenGranter implements TokenGranter {
         this.userAuthenticationManager = userAuthenticationManager;
         this.clientAuthenticationManager = clientAuthenticationManager;
         this.tokenGranterMap = Map.of(
-                AuthorizationGrantType.PASSWORD.getValue(), new ResourceOwnerPasswordCredentialsTokenGranter(tokenServices, userAuthenticationManager)
+                AuthorizationGrantType.PASSWORD.getValue(), new ResourceOwnerPasswordCredentialsTokenGranter(tokenServices, userAuthenticationManager),
+                AuthorizationGrantType.AUTHORIZATION_CODE.getValue(), new AuthorizationCodeTokenGranter(tokenServices, userAuthenticationManager)
         );
     }
 
@@ -43,9 +46,12 @@ public class CompositeTokenGranter implements TokenGranter {
 
     @Override
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
-        return validateRequest(authorizationRequest).then(
-                tokenGranterMap.get(authorizationRequest.getGrantType())
-                        .grantToken(authentication, authorizationRequest)
-        );
+        Mono<OAuth2Token> tokenGranterMono = Mono.just(tokenGranterMap)
+                .map(map -> map.get(authorizationRequest.getGrantType()))
+                .flatMap(tokenGranter -> tokenGranter.grantToken(authentication, authorizationRequest))
+                .doOnError(err -> {throw Exceptions.propagate(new OAuthError(UNSUPPORTED_GRANT_TYPE));});
+
+        return validateRequest(authorizationRequest)
+                .then(tokenGranterMono);
     }
 }

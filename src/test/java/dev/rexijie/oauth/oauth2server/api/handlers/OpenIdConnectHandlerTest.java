@@ -1,10 +1,10 @@
 package dev.rexijie.oauth.oauth2server.api.handlers;
 
-import dev.rexijie.oauth.oauth2server.api.ApiTest;
+import dev.rexijie.oauth.oauth2server.api.OAuthTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
-class OpenIdConnectHandlerTest extends ApiTest {
+class OpenIdConnectHandlerTest extends OAuthTest {
 
     @Test
     void whenGetOpenIdProperties_thenOk() {

@@ -10,6 +10,7 @@ import java.util.*;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthorizationRequest {
+    public static final String AUTHORIZATION_SESSION_ATTRIBUTE = "dev.rexijie.auth.AuthorizationRequest";
     private String grantType;
     private String responseType;
     private String clientId;
