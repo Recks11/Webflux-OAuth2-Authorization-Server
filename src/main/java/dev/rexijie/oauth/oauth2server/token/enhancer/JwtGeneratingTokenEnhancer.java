@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.token;
+package dev.rexijie.oauth.oauth2server.token.enhancer;
 
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.util.TimeUtils;

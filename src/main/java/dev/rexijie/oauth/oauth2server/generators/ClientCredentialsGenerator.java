@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.services;
+package dev.rexijie.oauth.oauth2server.generators;
 
 import dev.rexijie.oauth.oauth2server.api.domain.ClientCredentials;
 import org.springframework.stereotype.Component;

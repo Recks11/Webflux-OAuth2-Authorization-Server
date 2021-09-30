@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.services;
+package dev.rexijie.oauth.oauth2server.generators;
 
 
 import org.slf4j.Logger;

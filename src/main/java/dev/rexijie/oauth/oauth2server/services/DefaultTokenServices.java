@@ -6,7 +6,7 @@ import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.model.User;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
-import dev.rexijie.oauth.oauth2server.token.TokenEnhancer;
+import dev.rexijie.oauth.oauth2server.token.enhancer.TokenEnhancer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;

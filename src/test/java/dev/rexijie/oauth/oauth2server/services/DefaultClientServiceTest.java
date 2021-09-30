@@ -1,6 +1,7 @@
 package dev.rexijie.oauth.oauth2server.services;
 
 import dev.rexijie.oauth.oauth2server.api.domain.ClientCredentials;
+import dev.rexijie.oauth.oauth2server.generators.CredentialsGenerator;
 import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
