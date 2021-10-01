@@ -80,7 +80,7 @@ public abstract class OAuthTest {
 
     public WebTestClient authClient() {
         return webTestClient.mutate()
-                .defaultHeader("Authorization", "basic %s".formatted(getBasicCredentials()))
+                .defaultHeader("Authorization", "Basic %s".formatted(getBasicCredentials()))
                 .build();
     }
 

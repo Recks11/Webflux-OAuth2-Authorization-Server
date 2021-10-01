@@ -10,9 +10,9 @@ public class OAuthError extends RuntimeException implements StatusAwareException
     public static OAuthError UNAUTHORIZED_CLIENT_ERROR = new OAuthError(OAuthErrors.UNAUTHORIZED_CLIENT);
     public static OAuthError UNSUPPORTED_GRANT_TYPE_ERROR = new OAuthError(OAuthErrors.UNSUPPORTED_GRANT_TYPE);
     public static OAuthError INVALID_SCOPE_ERROR = new OAuthError(OAuthErrors.INVALID_SCOPE);
-    private final int status;
+    private int status;
     private final String error;
-    private final String errorDescription;
+    private String errorDescription;
 
     public OAuthError(OAuthErrors errorEnum) {
         super(errorEnum.getError());
@@ -21,11 +21,14 @@ public class OAuthError extends RuntimeException implements StatusAwareException
         this.errorDescription = errorEnum.getErrorDescription();
     }
 
+    public OAuthError(OAuthErrors errorEnum, String reason) {
+        this(errorEnum);
+        this.errorDescription = reason;
+    }
+
     public OAuthError(OAuthErrors errorEnum, Throwable cause) {
-        super(cause);
+        this(cause, errorEnum.getError(), errorEnum.errorDescription);
         this.status = errorEnum.getStatus();
-        this.error = errorEnum.getError();
-        this.errorDescription = errorEnum.getErrorDescription();
     }
 
     public OAuthError(Throwable cause, String error, String errorDescription) {

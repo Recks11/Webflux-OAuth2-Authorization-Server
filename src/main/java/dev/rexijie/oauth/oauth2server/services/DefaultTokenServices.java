@@ -3,8 +3,8 @@ package dev.rexijie.oauth.oauth2server.services;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import dev.rexijie.oauth.oauth2server.api.domain.RefreshTokenRequest;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
-import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.model.User;
+import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.enhancer.TokenEnhancer;
 import org.slf4j.Logger;
@@ -27,13 +27,15 @@ public class DefaultTokenServices implements TokenServices {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultTokenServices.class);
 
     private final ClientService clientService;
+    private final TokenEnhancer tokenEnhancer;
     private final TokenService tokenService;
 
     public DefaultTokenServices(ClientService clientService,
-                                OAuth2Properties oAuth2Properties,
+                                TokenEnhancer tokenEnhancer,
                                 TokenService tokenService) {
         this.clientService = clientService;
         this.tokenService = tokenService;
+        this.tokenEnhancer = tokenEnhancer;
     }
 
 
@@ -46,9 +48,9 @@ public class DefaultTokenServices implements TokenServices {
     @Override
     public Mono<OAuth2Token> createAccessToken(Authentication authentication) {
         var auth2Authentication = (OAuth2Authentication) authentication;
-        var clientMetaData = (Client) authentication.getDetails();
+        var clientMetaData = (ClientDTO) authentication.getDetails();
 
-        if (!clientMetaData.scopes().containsAll(auth2Authentication.getStoredRequest().getScopes()))
+        if (!clientMetaData.getScopes().containsAll(auth2Authentication.getStoredRequest().getScopes()))
             return Mono.error(INVALID_SCOPE_ERROR);
 
         Token token = generateToken(authentication);
@@ -56,7 +58,7 @@ public class DefaultTokenServices implements TokenServices {
         var oauthToken = new OAuth2AccessToken(BEARER,
                 token.getKey(),
                 Instant.now(),
-                Instant.now().plusSeconds(clientMetaData.accessTokenValidity()),
+                Instant.now().plusSeconds(clientMetaData.getAccessTokenValidity()),
                 auth2Authentication.getStoredRequest().getScopes()); // TODO (modify to get scopes a user can have?)
 
         return getTokenEnhancer().enhance(oauthToken, authentication);
@@ -75,12 +77,11 @@ public class DefaultTokenServices implements TokenServices {
     }
 
     private String generateTokenAdditionalInformation(Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        return "username=%s".formatted(user.getUsername());
+        return "username=%s".formatted(authentication.getPrincipal());
     }
 
     protected TokenEnhancer getTokenEnhancer() {
-        return (token, auth) -> Mono.just(token);
+        return this.tokenEnhancer;
     }
 
     private Token generateToken(Authentication authentication) {

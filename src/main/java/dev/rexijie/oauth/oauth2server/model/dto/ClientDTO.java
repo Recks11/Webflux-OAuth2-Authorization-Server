@@ -24,10 +24,12 @@ public class ClientDTO {
     private Set<String> authorities;
     private String clientProfile;
     private String logoUri;
+    private int accessTokenValidity;
+    private int refreshTokenValidity;
     private String clientUri;
     private String selectorIdentifierUri;
     private String subjectTypes;
-    //    String tokenEndpointAuthenticationMethod;
+    private String tokenEndpointAuthenticationMethod;
     private int defaultMaxAge;
 
     public ClientDTO() {
@@ -36,9 +38,10 @@ public class ClientDTO {
     public ClientDTO(String clientName, String clientType,
                      Set<String> scopes, Set<String> resourceIds, Set<String> grantTypes,
                      Set<String> redirectUris, Set<String> authorities,
-                     String clientProfile, String logoUri,
+                     String clientProfile, String logoUri, int accessTokenValidity, int refreshTokenValidity,
                      String clientUri, String selectorIdentifierUri,
-                     String subjectTypes, int defaultMaxAge) {
+                     String subjectTypes, String tokenEndpointAuthenticationMethod,
+                     int defaultMaxAge) {
         this.clientName = clientName;
         this.clientType = clientType;
         this.scopes = scopes;
@@ -48,9 +51,12 @@ public class ClientDTO {
         this.authorities = authorities;
         this.clientProfile = clientProfile;
         this.logoUri = logoUri;
+        this.accessTokenValidity = accessTokenValidity;
+        this.refreshTokenValidity = refreshTokenValidity;
         this.clientUri = clientUri;
         this.selectorIdentifierUri = selectorIdentifierUri;
         this.subjectTypes = subjectTypes;
+        this.tokenEndpointAuthenticationMethod = tokenEndpointAuthenticationMethod;
         this.defaultMaxAge = defaultMaxAge;
     }
 
@@ -90,6 +96,14 @@ public class ClientDTO {
         return logoUri;
     }
 
+    public int getAccessTokenValidity() {
+        return accessTokenValidity;
+    }
+
+    public int getRefreshTokenValidity() {
+        return refreshTokenValidity;
+    }
+
     public String getClientUri() {
         return clientUri;
     }
@@ -102,6 +116,10 @@ public class ClientDTO {
         return subjectTypes;
     }
 
+    public String getTokenEndpointAuthenticationMethod() {
+        return tokenEndpointAuthenticationMethod;
+    }
+
     public int getDefaultMaxAge() {
         return defaultMaxAge;
     }
@@ -111,7 +129,22 @@ public class ClientDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ClientDTO clientDTO = (ClientDTO) o;
-        return getDefaultMaxAge() == clientDTO.getDefaultMaxAge() && Objects.equals(getClientName(), clientDTO.getClientName()) && Objects.equals(getClientType(), clientDTO.getClientType()) && Objects.equals(getScopes(), clientDTO.getScopes()) && Objects.equals(getResourceIds(), clientDTO.getResourceIds()) && Objects.equals(getGrantTypes(), clientDTO.getGrantTypes()) && Objects.equals(getRedirectUris(), clientDTO.getRedirectUris()) && Objects.equals(getAuthorities(), clientDTO.getAuthorities()) && Objects.equals(getClientProfile(), clientDTO.getClientProfile()) && Objects.equals(getLogoUri(), clientDTO.getLogoUri()) && Objects.equals(getClientUri(), clientDTO.getClientUri()) && Objects.equals(getSelectorIdentifierUri(), clientDTO.getSelectorIdentifierUri()) && Objects.equals(getSubjectTypes(), clientDTO.getSubjectTypes());
+        return getDefaultMaxAge() == clientDTO.getDefaultMaxAge() &&
+                Objects.equals(getClientName(), clientDTO.getClientName()) &&
+                Objects.equals(getClientType(), clientDTO.getClientType()) &&
+                Objects.equals(getScopes(), clientDTO.getScopes()) &&
+                Objects.equals(getResourceIds(), clientDTO.getResourceIds()) &&
+                Objects.equals(getGrantTypes(), clientDTO.getGrantTypes()) &&
+                Objects.equals(getRedirectUris(), clientDTO.getRedirectUris()) &&
+                Objects.equals(getAuthorities(), clientDTO.getAuthorities()) &&
+                Objects.equals(getClientProfile(), clientDTO.getClientProfile()) &&
+                Objects.equals(getAccessTokenValidity(), clientDTO.getAccessTokenValidity()) &&
+                Objects.equals(getRefreshTokenValidity(), clientDTO.getRefreshTokenValidity()) &&
+                Objects.equals(getLogoUri(), clientDTO.getLogoUri()) &&
+                Objects.equals(getClientUri(), clientDTO.getClientUri()) &&
+                Objects.equals(getSelectorIdentifierUri(), clientDTO.getSelectorIdentifierUri()) &&
+                Objects.equals(getSubjectTypes(), clientDTO.getSubjectTypes()) &&
+                Objects.equals(getTokenEndpointAuthenticationMethod(), clientDTO.getTokenEndpointAuthenticationMethod());
     }
 
     public static class ClientMapper {
@@ -126,9 +159,12 @@ public class ClientDTO {
                     client.authorities(),
                     client.clientProfile(),
                     client.logoUri(),
+                    client.accessTokenValidity(),
+                    client.refreshTokenValidity(),
                     client.clientUri(),
                     client.selectorIdentifierUri(),
                     client.subjectTypes(),
+                    client.tokenEndpointAuthMethod(),
                     client.defaultMaxAge()
             );
         }
@@ -154,7 +190,7 @@ public class ClientDTO {
                     null,
                     clientDTO.selectorIdentifierUri,
                     clientDTO.subjectTypes,
-                    null,
+                    clientDTO.tokenEndpointAuthenticationMethod,
                     clientDTO.defaultMaxAge,
                     false,
                     0,

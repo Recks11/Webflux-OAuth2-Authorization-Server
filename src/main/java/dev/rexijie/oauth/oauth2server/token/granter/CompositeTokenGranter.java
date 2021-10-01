@@ -2,6 +2,7 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
+import dev.rexijie.oauth.oauth2server.services.ReactiveAuthorizationCodeServices;
 import dev.rexijie.oauth.oauth2server.services.TokenServices;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
@@ -21,20 +22,16 @@ import static dev.rexijie.oauth.oauth2server.error.OAuthError.OAuthErrors.UNSUPP
 @Component
 public class CompositeTokenGranter implements TokenGranter {
 
-    private final TokenServices tokenServices;
-    private final ReactiveAuthenticationManager userAuthenticationManager;
-    private final ReactiveAuthenticationManager clientAuthenticationManager;
     private final Map<String, TokenGranter> tokenGranterMap;
 
     public CompositeTokenGranter(TokenServices tokenServices,
                                  @Qualifier("userAuthenticationManager") ReactiveAuthenticationManager userAuthenticationManager,
-                                 @Qualifier("clientAuthenticationManager") ReactiveAuthenticationManager clientAuthenticationManager) {
-        this.tokenServices = tokenServices;
-        this.userAuthenticationManager = userAuthenticationManager;
-        this.clientAuthenticationManager = clientAuthenticationManager;
+                                 @Qualifier("clientAuthenticationManager") ReactiveAuthenticationManager clientAuthenticationManager,
+                                 ReactiveAuthorizationCodeServices authorizationCodeServices) {
+
         this.tokenGranterMap = Map.of(
                 AuthorizationGrantType.PASSWORD.getValue(), new ResourceOwnerPasswordCredentialsTokenGranter(tokenServices, userAuthenticationManager),
-                AuthorizationGrantType.AUTHORIZATION_CODE.getValue(), new AuthorizationCodeTokenGranter(tokenServices, userAuthenticationManager)
+                AuthorizationGrantType.AUTHORIZATION_CODE.getValue(), new AuthorizationCodeTokenGranter(tokenServices, authorizationCodeServices)
         );
     }
 
@@ -48,8 +45,8 @@ public class CompositeTokenGranter implements TokenGranter {
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
         Mono<OAuth2Token> tokenGranterMono = Mono.just(tokenGranterMap)
                 .map(map -> map.get(authorizationRequest.getGrantType()))
-                .flatMap(tokenGranter -> tokenGranter.grantToken(authentication, authorizationRequest))
-                .doOnError(err -> {throw Exceptions.propagate(new OAuthError(UNSUPPORTED_GRANT_TYPE));});
+                .doOnError(err -> {throw Exceptions.propagate(new OAuthError(UNSUPPORTED_GRANT_TYPE));})
+                .flatMap(tokenGranter -> tokenGranter.grantToken(authentication, authorizationRequest));
 
         return validateRequest(authorizationRequest)
                 .then(tokenGranterMono);

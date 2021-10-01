@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.CacheControl;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -31,12 +32,14 @@ public class TokenEndpointHandler extends OAuthEndpointHandler {
         this.jwkSet = jwkSet;
     }
 
+    // TODO (if an authorization code is used more than once, then revoke all tokens issued with that code)
+
     public Mono<ServerResponse> getToken(ServerRequest request) {
         return extractAuthorizationFromBody(request) // extract authentication request
                 .switchIfEmpty(extractAuthorizationFromParams(request))
                 .flatMap(authorizationRequest -> request.principal() // get authenticated client credentials from request
                         .flatMap(principal -> tokenGranter.grantToken((Authentication) principal, authorizationRequest) // grant token
-                                .cast(OAuth2AccessToken.class)) // cast to OAuth2AccessToken class
+                                .cast(OAuth2AccessToken.class))// cast to OAuth2AccessToken class
                         .map(OAuth2TokenResponse::fromAccessToken)) // convert to access token response
                 .flatMap(token -> ServerResponse
                         .ok()

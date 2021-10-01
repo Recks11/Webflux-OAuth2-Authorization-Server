@@ -6,6 +6,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -20,11 +21,11 @@ import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OAuth2ApprovalAuthorizationToken extends AbstractAuthenticationToken {
-    private final Object principal;
+    private final Object principal; // username of authenticated user
     private final Object credentials;
-    private final String authorizedClientId;
-    private String approvalTokenId;
-    private AuthorizationRequest authorizationRequest;
+    private final String authorizedClientId; // authorized client id
+    private String approvalTokenId; // code of the approved token
+    private AuthorizationRequest authorizationRequest; // stored request
     private final Map<String, Boolean> approvalMap;
 
     /**
@@ -105,5 +106,26 @@ public class OAuth2ApprovalAuthorizationToken extends AbstractAuthenticationToke
                 .stream()
                 .filter(approvalMap::get)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        OAuth2ApprovalAuthorizationToken token = (OAuth2ApprovalAuthorizationToken) o;
+        return getPrincipal().equals(token.getPrincipal()) &&
+                getCredentials().equals(token.getCredentials()) &&
+                getAuthorizedClientId().equals(token.getAuthorizedClientId()) &&
+                getAuthorizationRequest().equals(token.getAuthorizationRequest()) &&
+                getApprovalMap().equals(token.getApprovalMap());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                super.hashCode(), getPrincipal(),
+                getCredentials(), getAuthorizedClientId(),
+                getAuthorizationRequest(), getApprovalMap());
     }
 }

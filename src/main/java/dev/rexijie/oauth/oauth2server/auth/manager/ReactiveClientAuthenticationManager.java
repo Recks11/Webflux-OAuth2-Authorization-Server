@@ -8,6 +8,8 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import reactor.core.publisher.Mono;
 
+import static dev.rexijie.oauth.oauth2server.model.dto.ClientDTO.ClientMapper.toDto;
+
 public class ReactiveClientAuthenticationManager extends AbstractUserDetailsReactiveAuthenticationManager {
 
     private final ReactiveUserDetailsService clientDetailsService;
@@ -31,10 +33,10 @@ public class ReactiveClientAuthenticationManager extends AbstractUserDetailsReac
     private OAuth2Authentication convertTokenToOAuth2Token(Authentication authentication) {
         ClientUserDetails clientUserDetails = (ClientUserDetails) authentication.getPrincipal();
         OAuth2Authentication auth = new OAuth2Authentication(clientUserDetails.clientData().clientId(),
-                authentication.getCredentials(),
+                "[YOU THOUGHT!!]",
                 authentication.getAuthorities());
         auth.setAuthenticated(authentication.isAuthenticated());
-        auth.setDetails(clientUserDetails.clientData());
+        auth.setDetails(toDto(clientUserDetails.clientData()));
         return auth;
     }
 

@@ -35,6 +35,11 @@ public abstract class AbstractOAuth2TokenGranter implements TokenGranter {
                 .map(authentication -> new OAuth2AuthorizationRequest(authorizationRequest, authentication));
     }
 
+    /**
+     * Create an {@link OAuth2Authentication} token from the provided client authentication and the {@link OAuth2AuthorizationRequest}
+     * @param authentication client authentication
+     * @param authorizationRequest authorization request containing the user authentication
+     */
     protected OAuth2Authentication createAuthenticationToken(Authentication authentication,
                                                              OAuth2AuthorizationRequest authorizationRequest) {
         OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) authentication;

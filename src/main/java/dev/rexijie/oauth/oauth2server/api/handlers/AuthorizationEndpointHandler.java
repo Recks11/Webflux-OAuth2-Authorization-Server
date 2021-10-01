@@ -25,6 +25,7 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.Optional;
 
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.PASSWORD_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBUTE;
@@ -160,6 +161,7 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
 
                             URI codeUri = modifyUri(redirectUri)
                                     .queryParam("code", token.getApprovalTokenId())
+                                    .queryParamIfPresent("state", Optional.of(token.getAuthorizationRequest().getState()))
                                     .build();
 
                             return ServerResponse

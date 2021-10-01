@@ -5,8 +5,10 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import dev.rexijie.oauth.oauth2server.generators.KeyGen;
+import dev.rexijie.oauth.oauth2server.security.keys.KeyPairContainer;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
-import dev.rexijie.oauth.oauth2server.security.keys.RSAKeyPairStore;
+import dev.rexijie.oauth.oauth2server.security.keys.InMemoryRSAKeyPairStore;
+import dev.rexijie.oauth.oauth2server.token.NimbusdsJoseServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +27,8 @@ import java.security.interfaces.RSAPublicKey;
 public class SecurityEncryptionConfig {
     private static final Logger LOG = LoggerFactory.getLogger(SecurityEncryptionConfig.class);
 
-    @Bean @Primary
+    @Bean
+    @Primary
     public TokenService tokenService(OAuth2Properties properties) {
         try {
             var secureRandom = new SecureRandomFactoryBean().getObject();
@@ -62,18 +65,24 @@ public class SecurityEncryptionConfig {
     }
 
     @Bean
-    public KeyPairStore rsaKeyStore() throws Exception {
-        return new RSAKeyPairStore(KeyGen.generateKeys());
+    public KeyPairStore<RSAPrivateKey, RSAPublicKey> rsaKeyStore() {
+        return new InMemoryRSAKeyPairStore(KeyGen.generateKeys());
     }
 
     @Bean
-    public JWKSet jwkSet(KeyPairStore keyPairStore) {
-        RSAKey.Builder builder = new RSAKey.Builder(keyPairStore.getPublicKey(RSAPublicKey.class))
-                .privateKey(keyPairStore.getPrivateKey(RSAPrivateKey.class))
-                .keyUse(KeyUse.SIGNATURE)
-                .algorithm(JWSAlgorithm.RS256)
-                .keyID(keyPairStore.getId());
+    public NimbusdsJoseServices jwtServices() {
+        return new NimbusdsJoseServices();
+    }
 
-        return new JWKSet(builder.build());
+    @Bean
+    public JWKSet jwkSet() {
+        KeyPairContainer keyPair = rsaKeyStore().getDefault();
+        RSAKey build = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
+                .privateKey(keyPair.getPrivate())
+                .keyUse(KeyUse.SIGNATURE)
+                .algorithm(JWSAlgorithm.parse(keyPair.getKeyAlgorithm()))
+                .keyID(rsaKeyStore().getId())
+                .build();
+        return new JWKSet(build);
     }
 }

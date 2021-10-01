@@ -13,6 +13,8 @@ import java.util.Collection;
 
 /**
  * Authentication that holds both the user and client authentication.
+ * The principal for this authenticaiton is the client id.
+ * other information of the client is stored in the client details as {@link dev.rexijie.oauth.oauth2server.model.Client}
  */
 public class OAuth2Authentication extends AbstractAuthenticationToken {
     @Serial

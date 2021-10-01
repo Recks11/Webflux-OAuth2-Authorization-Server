@@ -18,6 +18,7 @@
         <testcontainers.version>1.16.0</testcontainers.version>
         <spring-cloud.version>2020.0.3</spring-cloud.version>
         <avro.version>1.10.2</avro.version>
+        <jjwt.version>0.11.2</jjwt.version>
     </properties>
     <dependencies>
         <dependency>
@@ -54,6 +55,23 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-jose</artifactId>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.jsonwebtoken</groupId>-->
+<!--            <artifactId>jjwt-api</artifactId>-->
+<!--            <version>${jjwt.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.jsonwebtoken</groupId>-->
+<!--            <artifactId>jjwt-impl</artifactId>-->
+<!--            <version>${jjwt.version}</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.jsonwebtoken</groupId>-->
+<!--            <artifactId>jjwt-jackson</artifactId> &lt;!&ndash; or jjwt-gson if Gson is preferred &ndash;&gt;-->
+<!--            <version>${jjwt.version}</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
         <!-- serialization -->
         <dependency>
             <groupId>org.apache.avro</groupId>

@@ -5,7 +5,6 @@ import dev.rexijie.oauth.oauth2server.auth.AuthenticationSerializationWrapper;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.repository.AuthorizationCodeRepository;
 import dev.rexijie.oauth.oauth2server.token.OAuth2ApprovalAuthorizationToken;
-import dev.rexijie.oauth.oauth2server.util.SerializationUtils;
 import org.bson.internal.Base64;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
@@ -15,10 +14,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Authorization code services that creates and consumes authorization codes for the
@@ -79,8 +75,28 @@ public class DefaultReactiveAuthorizationCodeServices implements ReactiveAuthori
         return authorizationCodeRepository.findByCode(code)
                 .map(wrapper -> {
                     Token token = tokenService.verifyToken(wrapper.getApprovalToken());
-                    return convertAdditionalInformation(token.getExtendedInformation());
+                    var storedAuth = objectMapper.convertValue(wrapper.getAuthentication(),
+                            OAuth2ApprovalAuthorizationToken.class);
+                    var tuple = convertAdditionalInformation(token.getExtendedInformation());
+                    return verifyAuth(storedAuth, tuple);
                 });
+    }
+
+    private OAuth2ApprovalAuthorizationToken verifyAuth(OAuth2ApprovalAuthorizationToken storedAuth,
+                            Object[] tuple) {
+        var token = (OAuth2ApprovalAuthorizationToken) tuple[0];
+        Objects.requireNonNull(tuple[1], "invalid token");
+        var h = Integer.parseInt(tuple[1].toString());
+        if (storedAuth.hashCode() != h)
+            throw new OAuthError(null, 401, "M2X3","the request is invalid");
+        if (storedAuth.getApprovedScopes().equals(token.getApprovedScopes()) &&
+                storedAuth.getPrincipal().equals(token.getPrincipal()) &&
+                storedAuth.getAuthorizedClientId().equals(token.getAuthorizedClientId()) &&
+                storedAuth.getApprovalMap().equals(token.getApprovalMap())) {
+            token.setDetails(storedAuth.getDetails());
+            token.setAuthenticated(storedAuth.isAuthenticated());
+        }
+        return token;
     }
 
     public String createAdditionalInformation(OAuth2ApprovalAuthorizationToken token) {
@@ -92,21 +108,28 @@ public class DefaultReactiveAuthorizationCodeServices implements ReactiveAuthori
         for (String scope : token.getApprovedScopes()) {
             sb.append(scope).append(SCOPE_SPLIT);
         }
+        sb.append(SPLIT_TOKEN).append("t_hash:").append(token.hashCode());
 
         return sb.toString();
     }
 
-    public OAuth2ApprovalAuthorizationToken convertAdditionalInformation(String additionalInformation) {
+    public Object[] convertAdditionalInformation(String additionalInformation) {
         String[] split = additionalInformation.split(SPLIT_TOKEN);
         String principal = split[0];
         String clientId = split[1];
-        boolean allApproved = Boolean.parseBoolean(split[2]);
-        String scopesExpression = split[4];
+        String scopesExpression = split[3];
+        String hash = split[4];
         String[] scopeTokens = scopesExpression.split(SCOPE_SPLIT);
         Set<String> approvedScopes = new HashSet<>(Arrays.asList(scopeTokens));
-        return new OAuth2ApprovalAuthorizationToken(
+
+        OAuth2ApprovalAuthorizationToken token = new OAuth2ApprovalAuthorizationToken(
                 principal, null, clientId, approvedScopes
         );
+
+        for (String scope : approvedScopes)
+            token.approve(scope);
+
+        return new Object[]{token, hash.split(":")[1]};
     }
 
     public Mono<byte[]> writeToByteArray(Object object) {
