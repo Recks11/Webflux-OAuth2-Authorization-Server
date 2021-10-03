@@ -3,11 +3,9 @@ package dev.rexijie.oauth.oauth2server.token;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -21,17 +19,21 @@ import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OAuth2ApprovalAuthorizationToken extends AbstractAuthenticationToken {
-    private final Object principal; // username of authenticated user
-    private final Object credentials;
-    private final String authorizedClientId; // authorized client id
+    private Object principal; // username of authenticated user
+    private Object credentials;
+    private String authorizedClientId; // authorized client id
     private String approvalTokenId; // code of the approved token
     private AuthorizationRequest authorizationRequest; // stored request
-    private final Map<String, Boolean> approvalMap;
+    private Map<String, Boolean> approvalMap;
+
+    public OAuth2ApprovalAuthorizationToken() {
+        super(null);
+    }
 
     /**
      * Create OAuth2ApprovalAuthorizationToken from credentials and an AuthorizationRequest
      * @param principal the username
-     * @param credentials the user password (for authentication only). it can be null tbh
+     * @param credentials the user password (for userAuthentication only). it can be null tbh
      * @param authorizationRequest the authorization request initiated prior to approval
      */
     public OAuth2ApprovalAuthorizationToken(Object principal, Object credentials, AuthorizationRequest authorizationRequest) {

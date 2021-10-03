@@ -23,7 +23,4 @@ public class AuthenticationSerializationWrapper {
         return authentication;
     }
 
-    public void onConsume() {
-
-    }
 }

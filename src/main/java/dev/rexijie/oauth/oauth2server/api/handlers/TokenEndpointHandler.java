@@ -35,7 +35,7 @@ public class TokenEndpointHandler extends OAuthEndpointHandler {
     // TODO (if an authorization code is used more than once, then revoke all tokens issued with that code)
 
     public Mono<ServerResponse> getToken(ServerRequest request) {
-        return extractAuthorizationFromBody(request) // extract authentication request
+        return extractAuthorizationFromBody(request) // extract userAuthentication request
                 .switchIfEmpty(extractAuthorizationFromParams(request))
                 .flatMap(authorizationRequest -> request.principal() // get authenticated client credentials from request
                         .flatMap(principal -> tokenGranter.grantToken((Authentication) principal, authorizationRequest) // grant token

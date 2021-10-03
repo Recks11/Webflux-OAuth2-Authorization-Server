@@ -36,9 +36,9 @@ public abstract class AbstractOAuth2TokenGranter implements TokenGranter {
     }
 
     /**
-     * Create an {@link OAuth2Authentication} token from the provided client authentication and the {@link OAuth2AuthorizationRequest}
-     * @param authentication client authentication
-     * @param authorizationRequest authorization request containing the user authentication
+     * Create an {@link OAuth2Authentication} token from the provided client userAuthentication and the {@link OAuth2AuthorizationRequest}
+     * @param authentication client userAuthentication
+     * @param authorizationRequest authorization request containing the user userAuthentication
      */
     protected OAuth2Authentication createAuthenticationToken(Authentication authentication,
                                                              OAuth2AuthorizationRequest authorizationRequest) {

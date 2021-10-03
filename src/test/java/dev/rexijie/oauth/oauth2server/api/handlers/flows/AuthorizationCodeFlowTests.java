@@ -93,11 +93,18 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
     @Test
     @Order(4)
     void canGrantTokenWithAuthorizationCodeFlow() {
-        var session = responseCookieState.get("COOKIE");
         // get token with authorization code
         FluxExchangeResult<OAuth2TokenResponse> tokenResponse = authClient()
                 .post()
                 .uri(TOKEN_ENDPOINT)
+                .body(BodyInserters.
+                        fromFormData("grant_type", "authorization_code")
+                        .with("code", "generated_code")
+                        .with("client_id", getDefaultClient().clientId())
+                        .with("redirect_uri", getDefaultClient().registeredRedirectUris().toArray(new String[]{})[0])
+                        .with("scopes", "read write")
+                        .with("nonce", "random_nonce_string")
+                        .with("state", "random_state"))
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(OAuth2TokenResponse.class);

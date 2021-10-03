@@ -2,8 +2,6 @@ package dev.rexijie.oauth.oauth2server.services;
 
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import dev.rexijie.oauth.oauth2server.api.domain.RefreshTokenRequest;
-import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
-import dev.rexijie.oauth.oauth2server.model.User;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.enhancer.TokenEnhancer;
@@ -43,7 +41,7 @@ public class DefaultTokenServices implements TokenServices {
     /**
      * Create an access token from an authenticated client provided an authorization request
      *
-     * @param authentication       client authentication
+     * @param authentication       client userAuthentication
      */
     @Override
     public Mono<OAuth2Token> createAccessToken(Authentication authentication) {
@@ -66,7 +64,7 @@ public class DefaultTokenServices implements TokenServices {
 
     @Override
     public Mono<OAuth2Token> refreshAccessToken(RefreshToken token, RefreshTokenRequest request) {
-        // read authentication from access token,
+        // read userAuthentication from access token,
         // use it to regenerate token
         return Mono.empty();
     }
@@ -87,7 +85,7 @@ public class DefaultTokenServices implements TokenServices {
     private Token generateToken(Authentication authentication) {
         var auth2Authentication = (OAuth2Authentication) authentication;
         var authorizationRequest = auth2Authentication.getAuthorizationRequest();
-        Authentication userAuthentication = authorizationRequest.authentication();
+        Authentication userAuthentication = authorizationRequest.userAuthentication();
 
         return tokenService.allocateToken(generateTokenAdditionalInformation(userAuthentication));
     }

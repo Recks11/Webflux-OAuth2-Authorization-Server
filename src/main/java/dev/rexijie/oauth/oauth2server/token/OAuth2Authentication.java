@@ -12,7 +12,7 @@ import java.io.Serial;
 import java.util.Collection;
 
 /**
- * Authentication that holds both the user and client authentication.
+ * Authentication that holds both the user and client userAuthentication.
  * The principal for this authenticaiton is the client id.
  * other information of the client is stored in the client details as {@link dev.rexijie.oauth.oauth2server.model.Client}
  */
@@ -33,7 +33,7 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
      * Creates a token with the supplied array of authorities.
      *
      * @param authorities the collection of <tt>GrantedAuthority</tt>s for the principal
-     *                    represented by this authentication object.
+     *                    represented by this userAuthentication object.
      * @param credentials the credentials of the authorized client
      */
     public OAuth2Authentication(Object principal, Object credentials,
@@ -88,7 +88,7 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
 
     @JsonIgnore
     public Object getUserPrincipal() {
-        return getAuthorizationRequest().authentication();
+        return getAuthorizationRequest().userAuthentication();
     }
 
     @Override

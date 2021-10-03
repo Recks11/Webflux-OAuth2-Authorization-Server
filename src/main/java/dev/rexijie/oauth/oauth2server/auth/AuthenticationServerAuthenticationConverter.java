@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 
 /**
- * The Authentication converter is responsible for extracting the authentication from requests (to the best of my understanding)
+ * The Authentication converter is responsible for extracting the userAuthentication from requests (to the best of my understanding)
  * Authentication converter that returns a token other than the default UsernamePasswordAuthenticationToken
  * gotten from {@link org.springframework.security.web.server.authentication.ServerHttpBasicAuthenticationConverter}
  */
