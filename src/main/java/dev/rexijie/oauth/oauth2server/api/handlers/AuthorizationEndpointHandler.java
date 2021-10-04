@@ -157,7 +157,8 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
 
                             // validate redirect uri
                             if (!clientDetails.getRedirectUris().contains(redirectUri))
-                                return Mono.error(new OAuthError(OAuthError.OAuthErrors.INVALID_REQUEST));
+                                return Mono.error(new OAuthError(OAuthError.OAuthErrors.INVALID_REQUEST,
+                                        "invalid client redirect uri"));
 
                             URI codeUri = modifyUri(redirectUri)
                                     .queryParam("code", token.getApprovalTokenId())
