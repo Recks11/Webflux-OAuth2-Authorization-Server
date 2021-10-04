@@ -67,9 +67,15 @@ public class OAuth2TokenResponse implements Serializable {
     }
 
     public static OAuth2TokenResponse fromAccessToken(OAuth2AccessToken accessToken) {
+        String scopes = "";
+        for (String scope :
+                accessToken.getScopes()) {
+            scopes = scopes.concat(scope + " ");
+        }
+        scopes = scopes.trim();
         return new OAuth2TokenResponse(accessToken.getTokenValue(),
                 accessToken.getTokenType().getValue(),
-                Arrays.toString(accessToken.getScopes().toArray()),
+                scopes,
                 (int) Objects.requireNonNull(accessToken.getExpiresAt()).getEpochSecond() -
                         Objects.requireNonNull(accessToken.getIssuedAt()).getEpochSecond(),
                 null);

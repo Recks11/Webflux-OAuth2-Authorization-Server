@@ -7,5 +7,5 @@ import reactor.core.publisher.Mono;
 public interface ClientService {
     Mono<ClientCredentials> createClient(ClientDTO clientDTO);
     Mono<ClientDTO> findClientById(String credentials);
-    Mono<ClientDTO> findClientByWithCredentials(ClientCredentials credentials);
+    Mono<ClientDTO> findClientWithCredentials(ClientCredentials credentials);
 }

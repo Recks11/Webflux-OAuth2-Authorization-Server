@@ -113,7 +113,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .assertNext(oAuth2TokenResponse -> {
                     assertThat(oAuth2TokenResponse.getScope()).isEqualTo("read write");
                     assertThat(oAuth2TokenResponse.getAccessToken()).isNotNull();
-                    assertThat(oAuth2TokenResponse.getTokenType()).isEqualTo("bearer");
+                    assertThat(oAuth2TokenResponse.getTokenType()).isEqualToIgnoringCase("bearer");
 //                    assertThat(oAuth2TokenResponse.getRefreshToken()).isNotNull();
                 })
                 .verifyComplete();
@@ -127,7 +127,8 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
         authClient()
                 .post()
                 .uri(getUriBuilder().replacePath(APPROVAL_ENDPOINT).build().toString())
-                .body(BodyInserters.fromFormData("read", "true")
+                .body(BodyInserters
+                        .fromFormData("read", "true")
                         .with("write", "true"))
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)

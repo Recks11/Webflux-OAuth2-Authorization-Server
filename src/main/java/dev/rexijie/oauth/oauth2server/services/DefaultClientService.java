@@ -28,7 +28,8 @@ public class DefaultClientService implements ClientService {
 
     @Override
     public Mono<ClientCredentials> createClient(ClientDTO clientDTO) {
-        return validateClient(clientDTO)
+        return Mono.just(clientDTO)
+                .doOnNext(this::validateClient)
                 .zipWith(Mono.fromCallable(credentialsGenerator::generateCredentials))
                 .flatMap(tuple -> {
                     var dto = tuple.getT1();
@@ -53,13 +54,13 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public Mono<ClientDTO> findClientByWithCredentials(ClientCredentials credentials) {
+    public Mono<ClientDTO> findClientWithCredentials(ClientCredentials credentials) {
         return clientRepository.findByClientIdAndClientSecret(credentials.clientId(), credentials.clientSecret())
                 .switchIfEmpty(Mono.error(new ApiError(404, "Client does not exist")))
                 .map(ClientDTO.ClientMapper::toDto);
     }
 
-    private Mono<ClientDTO> validateClient(ClientDTO clientDTO) {
-        return Mono.just(clientDTO);
+    private void validateClient(ClientDTO clientDTO) {
+        Mono.just(clientDTO);
     }
 }
