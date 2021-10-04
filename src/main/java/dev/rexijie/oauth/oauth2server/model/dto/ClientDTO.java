@@ -147,6 +147,18 @@ public class ClientDTO {
                 Objects.equals(getTokenEndpointAuthenticationMethod(), clientDTO.getTokenEndpointAuthenticationMethod());
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClientName(), getClientType(),
+                getScopes(), getResourceIds(),
+                getGrantTypes(), getRedirectUris(),
+                getAuthorities(), getClientProfile(),
+                getLogoUri(), getAccessTokenValidity(),
+                getRefreshTokenValidity(), getClientUri(),
+                getSelectorIdentifierUri(), getSubjectTypes(),
+                getTokenEndpointAuthenticationMethod(), getDefaultMaxAge());
+    }
+
     public static class ClientMapper {
         public static ClientDTO toDto(Client client) {
             return new ClientDTO(

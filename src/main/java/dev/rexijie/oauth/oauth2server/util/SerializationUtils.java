@@ -13,6 +13,8 @@ import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
+import reactor.core.publisher.Mono;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,5 +34,10 @@ public class SerializationUtils {
             LOG.error("Serialization error:" + e.getMessage());
         }
         return new byte[0];
+    }
+
+    public static <T> Mono<T> deserializeAuthentication(byte[] authentication, Class<T> tClass) {
+        return Mono.fromCallable(() -> objectMapper.readValue(authentication, tClass))
+                .doOnError(t -> {throw Exceptions.propagate(t);});
     }
 }

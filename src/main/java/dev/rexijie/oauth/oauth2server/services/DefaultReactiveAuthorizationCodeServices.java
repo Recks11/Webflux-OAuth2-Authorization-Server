@@ -10,13 +10,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.token.Token;
 import org.springframework.security.core.token.TokenService;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Component;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.util.*;
+
+import static dev.rexijie.oauth.oauth2server.util.SerializationUtils.deserializeAuthentication;
 
 /**
  * Authorization code services that creates and consumes authorization codes for the
@@ -83,24 +83,21 @@ public class DefaultReactiveAuthorizationCodeServices implements ReactiveAuthori
                 });
     }
 
-    private <T> Mono<T> deserializeAuthentication(byte[] authentication, Class<T> tClass) {
-        return Mono.fromCallable(() -> objectMapper.readValue(authentication, tClass))
-                .doOnError(t -> {throw Exceptions.propagate(t);});
-    }
-
     private OAuth2ApprovalAuthorizationToken verifyAuth(OAuth2ApprovalAuthorizationToken storedAuth,
                                                         Object[] tuple) {
         var token = (OAuth2ApprovalAuthorizationToken) tuple[0];
         Objects.requireNonNull(tuple[1], "invalid token");
         var h = Integer.parseInt(tuple[1].toString());
-//        if (storedAuth.hashCode() != h)
-//            throw new OAuthError(null, 401, "M2X3", "the request is invalid");
+        if (storedAuth.hashCode() != h)
+            throw new OAuthError(null, 401, "M2X3", "the request is invalid");
         if (storedAuth.getApprovedScopes().equals(token.getApprovedScopes()) &&
                 storedAuth.getPrincipal().equals(token.getPrincipal()) &&
                 storedAuth.getAuthorizedClientId().equals(token.getAuthorizedClientId()) &&
                 storedAuth.getApprovalMap().equals(token.getApprovalMap())) {
             token.setDetails(storedAuth.getDetails());
             token.setAuthenticated(storedAuth.isAuthenticated());
+            token.setAuthorizationRequest(storedAuth.getAuthorizationRequest());
+            token.setApprovalTokenId(storedAuth.getApprovalTokenId());
         }
         return token;
     }

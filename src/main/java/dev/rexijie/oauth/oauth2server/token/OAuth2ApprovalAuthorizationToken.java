@@ -1,11 +1,17 @@
 package dev.rexijie.oauth.oauth2server.token;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
+import dev.rexijie.oauth.oauth2server.serializer.ApprovalTokenDeserializer;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -18,6 +24,7 @@ import java.util.stream.Collectors;
  */
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonDeserialize(using = ApprovalTokenDeserializer.class)
 public class OAuth2ApprovalAuthorizationToken extends AbstractAuthenticationToken {
     private Object principal; // username of authenticated user
     private Object credentials;
@@ -38,6 +45,7 @@ public class OAuth2ApprovalAuthorizationToken extends AbstractAuthenticationToke
      */
     public OAuth2ApprovalAuthorizationToken(Object principal, Object credentials, AuthorizationRequest authorizationRequest) {
         super(null);
+        Objects.requireNonNull(authorizationRequest, "authorizationRequest can not be null");
         this.principal = principal;
         this.credentials = credentials;
         this.authorizedClientId = authorizationRequest.getClientId();
@@ -97,12 +105,19 @@ public class OAuth2ApprovalAuthorizationToken extends AbstractAuthenticationToke
         approvalMap.replace(scope, true);
     }
 
+    @Override
+    public ClientDTO getDetails() {
+        return (ClientDTO) super.getDetails();
+    }
+
+    @JsonIgnore
     public boolean isAllApproved() {
         for (String scope : approvalMap.keySet())
             if (!isApproved(scope)) return false;
         return true;
     }
 
+    @JsonIgnore
     public List<String> getApprovedScopes() {
         return approvalMap.keySet()
                 .stream()
@@ -125,9 +140,8 @@ public class OAuth2ApprovalAuthorizationToken extends AbstractAuthenticationToke
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                super.hashCode(), getPrincipal(),
-                getCredentials(), getAuthorizedClientId(),
-                getAuthorizationRequest(), getApprovalMap());
+        return Objects.hash(getPrincipal(), getAuthorizedClientId(),
+                getAuthorizationRequest(), getApprovalMap(),
+                getDetails(), isAuthenticated());
     }
 }
