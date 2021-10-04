@@ -11,21 +11,30 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.springframework.security.oauth2.jose.jws.JwsAlgorithms.RS256;
 
 public class InMemoryRSAKeyPairStore implements KeyPairStore<RSAPrivateKey, RSAPublicKey> {
-    public static final String DEFAULT_KEY = "default";
     Map<String, KeyPairContainer> keyPairMap = new ConcurrentHashMap<>();
 
     public InMemoryRSAKeyPairStore(KeyPair keyPair) {
-        this.keyPairMap.put(DEFAULT_KEY, new KeyPairContainer(DEFAULT_KEY, keyPair, "sig", RS256));
+        try {
+            addKeyPair(DEFAULT_KEY_NAME, keyPair, "sig", RS256);
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean canStore(KeyPairContainer container) {
+        return container.getPrivate() instanceof RSAPrivateKey &&
+                container.getPublic() instanceof RSAPublicKey;
     }
 
     @Override
     public String getId() {
-        return DEFAULT_KEY;
+        return DEFAULT_KEY_NAME;
     }
 
     @Override
     public KeyPairContainer getDefault() {
-        return keyPairMap.get(DEFAULT_KEY);
+        return keyPairMap.get(DEFAULT_KEY_NAME);
     }
 
     @Override
@@ -35,12 +44,15 @@ public class InMemoryRSAKeyPairStore implements KeyPairStore<RSAPrivateKey, RSAP
 
     @Override
     public String addKeyPair(KeyPair keyPair, String keyUse, String alg) throws KeyStoreException {
-        if (keyPair.getPrivate() instanceof RSAPrivateKey &&
-                keyPair.getPublic() instanceof RSAPublicKey)
-            throw new KeyStoreException("Invalid Keys");
         var key = UUID.randomUUID().toString();
-        this.keyPairMap.put(key, new KeyPairContainer(keyPair, keyUse, alg));
+        addKeyPair(key, keyPair, keyUse, alg);
         return key;
+    }
+
+    private void addKeyPair(String id, KeyPair keyPair, String keyUse, String alg) throws KeyStoreException {
+        var container = new KeyPairContainer(id, keyPair, keyUse, alg);
+        if (!canStore(container)) throw new KeyStoreException("Invalid Keys");
+        this.keyPairMap.put(id, container);
     }
 
     @Override

@@ -1,8 +1,11 @@
 package dev.rexijie.oauth.oauth2server.token;
 
-import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWT;
 import reactor.core.publisher.Mono;
 
+
 public interface Signer {
-    Mono<String> sign(JWTClaimsSet token);
+    String SIGNING_KEY_ID = "dev.rexijie.signing.key";
+    Mono<String> sign(JWT token);
+    Mono<Boolean> verify(String token);
 }

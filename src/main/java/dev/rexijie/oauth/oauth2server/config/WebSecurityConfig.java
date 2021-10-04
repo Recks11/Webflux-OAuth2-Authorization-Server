@@ -72,7 +72,7 @@ public class WebSecurityConfig {
                         exchanges
                                 .anyExchange()
                                 .authenticated()
-                ).authenticationManager(userAuthenticationManager())
+                ).authenticationManager(clientAuthenticationManager())
                 .csrf().disable()
                 .httpBasic(withDefaults());
         return http.build();

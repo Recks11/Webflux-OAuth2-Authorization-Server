@@ -8,7 +8,8 @@ import dev.rexijie.oauth.oauth2server.generators.KeyGen;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairContainer;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
 import dev.rexijie.oauth.oauth2server.security.keys.InMemoryRSAKeyPairStore;
-import dev.rexijie.oauth.oauth2server.token.NimbusdsJoseServices;
+import dev.rexijie.oauth.oauth2server.token.NimbusdsJoseTokenSigner;
+import dev.rexijie.oauth.oauth2server.token.Signer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -70,8 +71,8 @@ public class SecurityEncryptionConfig {
     }
 
     @Bean
-    public NimbusdsJoseServices jwtServices() {
-        return new NimbusdsJoseServices();
+    public Signer jwtSigner() {
+        return new NimbusdsJoseTokenSigner(rsaKeyStore());
     }
 
     @Bean

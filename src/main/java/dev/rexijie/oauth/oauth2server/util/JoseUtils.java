@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 
-public class TokenUtils {
+public class JoseUtils {
     public static OAuth2AccessToken fromNimbusdsToken(AccessToken token) {
         return new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
                 token.getValue(),

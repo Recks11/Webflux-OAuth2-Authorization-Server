@@ -59,7 +59,7 @@ public class DefaultTokenServices implements TokenServices {
                 Instant.now(),
                 Instant.now().plusSeconds(clientMetaData.getAccessTokenValidity()),
                 auth2Authentication.getStoredRequest().getScopes()); // TODO (modify to get scopes a user can have?)
-        LOG.info("crating access token");
+        LOG.debug("crating access token");
         return getTokenEnhancer().enhance(oauthToken, authentication);
     }
 
