@@ -1,16 +1,96 @@
 package dev.rexijie.oauth.oauth2server.token;
 
+import com.nimbusds.jose.PlainHeader;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
+import com.nimbusds.oauth2.sdk.util.JWTClaimsSetUtils;
+import dev.rexijie.oauth.oauth2server.generators.KeyGen;
+import dev.rexijie.oauth.oauth2server.security.keys.InMemoryRSAKeyPairStore;
+import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.oauth2.jwt.JwtException;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NimbusdsJoseTokenSignerTest {
 
-    @Test
-    void sign() {
+    private Signer signer;
+
+    private PlainJWT getToken() {
+        return new PlainJWT(
+                new PlainHeader.Builder()
+                        .customParam(Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME)
+                        .build(),
+                new JWTClaimsSet.Builder()
+                        .subject("rexijie")
+                        .issueTime(Date.from(Instant.now()))
+                        .expirationTime(java.sql.Date.from(Instant.now().plus(10, ChronoUnit.SECONDS)))
+                        .build()
+
+        );
+    }
+
+    @BeforeEach
+    void setup() {
+        KeyPairStore<RSAPrivateKey, RSAPublicKey> kps = new InMemoryRSAKeyPairStore(KeyGen.generateKeys());
+        signer = new NimbusdsJoseTokenSigner(kps);
     }
 
     @Test
-    void verifyJWT() {
+    void canSignTokens() {
+        var token = getToken();
+        Mono<String> sign = signer.sign(token);
+        StepVerifier.create(sign)
+                .consumeNextWith(tk -> assertThat(tk).isNotNull().containsPattern("(^[\\w-]*\\.[\\w-]*\\.[\\w-]*$)"))
+                .verifyComplete();
+    }
+
+    @Test
+    void canVerifySignedTokens() {
+        var token = getToken();
+        Mono<Boolean> verify = signer.sign(token)
+                .flatMap(signer::verify);
+        StepVerifier.create(verify)
+                .assertNext(Assertions::assertTrue)
+                .verifyComplete();
+    }
+
+
+    @Test
+    void whenVerifyTokensWithBadKeys_thenFalse() {
+        var token = getToken();
+        Mono<Boolean> verify = signer.sign(token)
+                .flatMap(s -> {
+                    setup();
+                    return signer.verify(s);
+                });
+
+        StepVerifier.create(verify)
+                .assertNext(Assertions::assertFalse)
+                .verifyComplete();
+    }
+
+    @Test
+    void whenVerifyTokensWithBadToken_thenError() {
+        var token = getToken();
+        Mono<Boolean> verify = signer.sign(token)
+                .flatMap(s -> signer.verify(s.substring(2, s.length() - 5)));
+
+        StepVerifier.create(verify)
+                .expectError(JwtException.class)
+                .verify();
     }
 }

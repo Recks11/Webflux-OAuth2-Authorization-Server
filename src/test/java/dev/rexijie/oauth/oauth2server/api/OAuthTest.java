@@ -42,14 +42,16 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("test")
 public abstract class OAuthTest {
 
-    @MockBean private UserRepository userRepository;
-    @MockBean private ClientRepository clientRepository;
-    @MockBean private AuthorizationCodeRepository codeRepository;
-    @Autowired WebTestClient webTestClient;
-    @Autowired OAuth2Properties oAuth2Properties;
-    @Autowired PasswordEncoder passwordEncoder;
-    @Autowired TokenService tokenService;
-    @Autowired ObjectMapper objectMapper;
+
+    @Autowired private WebTestClient webTestClient;
+    @Autowired private OAuth2Properties oAuth2Properties;
+    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private TokenService tokenService;
+    @Autowired private ObjectMapper objectMapper;
+
+    @MockBean protected UserRepository userRepository;
+    @MockBean protected ClientRepository clientRepository;
+    @MockBean protected AuthorizationCodeRepository codeRepository;
 
     protected static String APPROVAL_ENDPOINT = "/oauth/approve";
     protected static String AUTHORIZATION_ENDPOINT = "/oauth/authorize";
@@ -58,10 +60,10 @@ public abstract class OAuthTest {
 
     @BeforeEach
     void initializeClient() {
-        when(clientRepository.findByClientId(any(String.class)))
+        when(clientRepository.findByClientId(getDefaultClient().clientId()))
                 .thenReturn(Mono.just(getDefaultClient()));
 
-        when(userRepository.findByUsername(any(String.class)))
+        when(userRepository.findByUsername(getDefaultUser().getUsername()))
                 .thenReturn(Mono.just(getDefaultUser()));
 
         when(clientRepository.save(any(Client.class)))
@@ -83,7 +85,7 @@ public abstract class OAuthTest {
 
     @AfterEach
     void cleanSlate() {
-        clearInvocations(userRepository, clientRepository);
+        clearInvocations(userRepository, clientRepository, codeRepository);
     }
 
     public WebTestClient apiClient() {
@@ -145,7 +147,7 @@ public abstract class OAuthTest {
     }
 
     protected Client getDefaultClient() {
-        return ModelMocks.testClient(passwordEncoder.encode("secret"));
+        return ModelMocks.testClient("test-client", passwordEncoder.encode("secret"));
     }
 
     protected User getDefaultUser() {
@@ -168,6 +170,10 @@ public abstract class OAuthTest {
                 .queryParam("state", "random_state")
                 .queryParam("nonce", "random_nonce_string");
 
+    }
+
+    protected UserRepository getUserRepository() {
+        return userRepository;
     }
 
 

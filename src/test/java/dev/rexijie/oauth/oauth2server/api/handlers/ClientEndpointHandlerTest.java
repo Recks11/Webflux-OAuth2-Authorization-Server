@@ -16,7 +16,7 @@ class ClientEndpointHandlerTest extends OAuthTest {
     void whenCreateClientWithValidClient_thenSuccess() {
         authClient()
                 .post()
-                .uri("/api/client")
+                .uri("/api/clients")
                 .body(Mono.just(ClientDTO.ClientMapper.toDto(testClient())), ClientDTO.class)
                 .exchange()
                 .expectStatus().isOk()
@@ -30,7 +30,7 @@ class ClientEndpointHandlerTest extends OAuthTest {
     void whenCreateClientWithInvalidClient_thenBadRequest() {
         authClient()
                 .post()
-                .uri("/api/client")
+                .uri("/api/clients")
                 .body(BodyInserters.fromValue(Map.of(
                         "client_name", "badClient",
                         "client_id", "sus id",

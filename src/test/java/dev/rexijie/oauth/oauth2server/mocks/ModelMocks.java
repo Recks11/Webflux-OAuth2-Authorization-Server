@@ -15,15 +15,15 @@ import java.util.UUID;
 
 public class ModelMocks {
     public static Client testClient() {
-        return testClient("secret");
+        return testClient("test-client", "secret");
     }
-    public static Client testClient(String secret) {
+    public static Client testClient(String clientId, String secret) {
         return new Client(
                 UUID.randomUUID().toString(),
                 "Test client",
                 ClientTypes.PUBLIC.toString(),
                 ClientProfiles.WEB.toString(),
-                "test-client",
+                clientId,
                 secret,
                 Set.of("read","write","read:profile"),
                 Set.of("OAuthServer"),
