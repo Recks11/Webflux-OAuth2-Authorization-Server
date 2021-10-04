@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationSerializationWrapper;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
+import dev.rexijie.oauth.oauth2server.generators.RandomStringSecretGenerator;
 import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.model.User;
@@ -127,7 +128,8 @@ public abstract class OAuthTest {
     }
 
     private AuthenticationSerializationWrapper getAuthenticationWrapper() {
-        var add = new DefaultReactiveAuthorizationCodeServices(null, null, null, null);
+        var add = new DefaultReactiveAuthorizationCodeServices(null, null, null, null,
+                new RandomStringSecretGenerator());
         try {
             return new AuthenticationSerializationWrapper("authentication_code",
                     tokenService.allocateToken(add.createAdditionalInformation(getApprovalToken())).getKey(),
@@ -171,10 +173,5 @@ public abstract class OAuthTest {
                 .queryParam("nonce", "random_nonce_string");
 
     }
-
-    protected UserRepository getUserRepository() {
-        return userRepository;
-    }
-
 
 }

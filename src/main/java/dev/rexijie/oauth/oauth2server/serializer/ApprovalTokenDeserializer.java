@@ -34,7 +34,7 @@ public class ApprovalTokenDeserializer extends StdDeserializer<OAuth2ApprovalAut
         JsonNode node = parser.getCodec().readTree(parser);
         var credentials = node.get("credentials").asText();
         var principal = node.get("principal").asText();
-        var approvalTokenId = node.get("approvalTokenId").asText();
+//        var approvalTokenId = node.get("approvalTokenId").asText();
         var authReq = node.get("authorizationRequest").toString();
         var aM = objectMapper.readValue(
                 node.get("approvalMap").toString(), new TypeReference<Map<String, Boolean>>() {
@@ -49,7 +49,7 @@ public class ApprovalTokenDeserializer extends StdDeserializer<OAuth2ApprovalAut
                 authorizationRequest
         );
         auth.setAuthenticated(authenticated);
-        auth.setApprovalTokenId(approvalTokenId);
+//        auth.setApprovalTokenId(approvalTokenId);
         aM.keySet().stream()
                 .filter(aM::get)
                 .forEach(auth::approve);

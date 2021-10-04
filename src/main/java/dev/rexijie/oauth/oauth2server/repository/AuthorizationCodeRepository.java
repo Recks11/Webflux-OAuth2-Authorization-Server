@@ -6,4 +6,5 @@ import reactor.core.publisher.Mono;
 
 public interface AuthorizationCodeRepository extends ReactiveMongoRepository<AuthenticationSerializationWrapper, String> {
     Mono<AuthenticationSerializationWrapper> findByCode(String code);
+    Mono<Void> deleteByCode(String code);
 }

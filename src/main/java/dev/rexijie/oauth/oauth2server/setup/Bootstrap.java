@@ -6,6 +6,7 @@ import dev.rexijie.oauth.oauth2server.model.ClientTypes;
 import dev.rexijie.oauth.oauth2server.model.User;
 import dev.rexijie.oauth.oauth2server.model.authority.Authority;
 import dev.rexijie.oauth.oauth2server.model.authority.AuthorityEnum;
+import dev.rexijie.oauth.oauth2server.repository.AuthorizationCodeRepository;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
 import dev.rexijie.oauth.oauth2server.util.TimeUtils;
@@ -26,11 +27,14 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
     private final ClientRepository clientRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
+    private final AuthorizationCodeRepository authorizationCodeServices;
 
-    public Bootstrap(ClientRepository clientRepository, UserRepository userRepository, PasswordEncoder encoder) {
+    public Bootstrap(ClientRepository clientRepository, UserRepository userRepository, PasswordEncoder encoder,
+                     AuthorizationCodeRepository authorizationCodeServices) {
         this.clientRepository = clientRepository;
         this.userRepository = userRepository;
         this.encoder = encoder;
+        this.authorizationCodeServices = authorizationCodeServices;
     }
 
     @Override
@@ -39,6 +43,7 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
         clientRepository.deleteAll().block();
         userRepository.save(defaultUser()).block();
         clientRepository.save(defaultClient()).block();
+        authorizationCodeServices.deleteAll().block();
     }
 
     private Client defaultClient() {
@@ -49,7 +54,7 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
                 ClientProfiles.WEB.toString(),
                 "test-client",
                 encoder.encode("secret"),
-                Set.of("read"),
+                Set.of("read", "write"),
                 Set.of("OAuthServer"),
                 Set.of("authorization_code", "implicit"),
                 Set.of("http://localhost:8081/oauth/code"),

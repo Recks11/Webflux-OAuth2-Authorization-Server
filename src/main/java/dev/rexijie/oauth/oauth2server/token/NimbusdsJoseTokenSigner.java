@@ -27,7 +27,7 @@ import java.text.ParseException;
 
 public class NimbusdsJoseTokenSigner implements Signer {
 
-    private KeyPairStore<RSAPrivateKey, RSAPublicKey> keyPairStore;
+    private final KeyPairStore<RSAPrivateKey, RSAPublicKey> keyPairStore;
     private final JWSSignerFactory jwsSignerFactory = new DefaultJWSSignerFactory();
     private final JWSVerifierFactory jwsVerifierFactory = new DefaultJWSVerifierFactory();
 
