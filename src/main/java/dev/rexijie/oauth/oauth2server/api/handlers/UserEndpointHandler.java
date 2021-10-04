@@ -2,7 +2,7 @@ package dev.rexijie.oauth.oauth2server.api.handlers;
 
 import dev.rexijie.oauth.oauth2server.error.ApiError;
 import dev.rexijie.oauth.oauth2server.model.dto.UserDTO;
-import dev.rexijie.oauth.oauth2server.services.UserService;
+import dev.rexijie.oauth.oauth2server.services.user.UserService;
 import dev.rexijie.oauth.oauth2server.validation.UserValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

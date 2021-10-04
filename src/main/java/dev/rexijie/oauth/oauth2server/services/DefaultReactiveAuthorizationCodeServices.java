@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationSerializationWrapper;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.repository.AuthorizationCodeRepository;
+import dev.rexijie.oauth.oauth2server.services.client.ClientService;
 import dev.rexijie.oauth.oauth2server.token.OAuth2ApprovalAuthorizationToken;
 import org.bson.internal.Base64;
 import org.springframework.beans.factory.annotation.Qualifier;

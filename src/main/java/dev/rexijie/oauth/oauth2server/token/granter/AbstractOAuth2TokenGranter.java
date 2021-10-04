@@ -3,7 +3,7 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
-import dev.rexijie.oauth.oauth2server.services.TokenServices;
+import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

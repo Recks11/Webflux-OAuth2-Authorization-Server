@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.services;
+package dev.rexijie.oauth.oauth2server.services.user;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

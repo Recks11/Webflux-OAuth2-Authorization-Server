@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.services;
+package dev.rexijie.oauth.oauth2server.services.token;
 
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import dev.rexijie.oauth.oauth2server.api.domain.RefreshTokenRequest;

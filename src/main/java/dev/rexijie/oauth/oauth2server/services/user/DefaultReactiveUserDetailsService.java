@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.services;
+package dev.rexijie.oauth.oauth2server.services.user;
 
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;

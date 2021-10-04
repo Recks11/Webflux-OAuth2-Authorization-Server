@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.services;
+package dev.rexijie.oauth.oauth2server.services.user;
 
 import dev.rexijie.oauth.oauth2server.model.dto.UserDTO;
 import reactor.core.publisher.Mono;

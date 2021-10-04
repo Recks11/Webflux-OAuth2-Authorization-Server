@@ -1,7 +1,7 @@
 package dev.rexijie.oauth.oauth2server.api.handlers;
 
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
-import dev.rexijie.oauth.oauth2server.services.ClientService;
+import dev.rexijie.oauth.oauth2server.services.client.ClientService;
 import dev.rexijie.oauth.oauth2server.validation.ClientValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

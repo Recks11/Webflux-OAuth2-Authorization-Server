@@ -5,8 +5,8 @@ import dev.rexijie.oauth.oauth2server.auth.manager.ReactiveClientAuthenticationM
 import dev.rexijie.oauth.oauth2server.auth.manager.ReactiveUserAuthenticationManager;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
-import dev.rexijie.oauth.oauth2server.services.DefaultClientDetailsService;
-import dev.rexijie.oauth.oauth2server.services.DefaultReactiveUserDetailsService;
+import dev.rexijie.oauth.oauth2server.services.client.DefaultClientDetailsService;
+import dev.rexijie.oauth.oauth2server.services.user.DefaultReactiveUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;

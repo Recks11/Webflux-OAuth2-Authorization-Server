@@ -1,4 +1,4 @@
-package dev.rexijie.oauth.oauth2server.services;
+package dev.rexijie.oauth.oauth2server.services.client;
 
 import dev.rexijie.oauth.oauth2server.api.domain.ClientCredentials;
 import dev.rexijie.oauth.oauth2server.error.ApiError;

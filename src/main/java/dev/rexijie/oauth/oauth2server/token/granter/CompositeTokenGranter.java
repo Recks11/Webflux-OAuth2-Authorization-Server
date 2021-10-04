@@ -3,7 +3,7 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.services.ReactiveAuthorizationCodeServices;
-import dev.rexijie.oauth.oauth2server.services.TokenServices;
+import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
 import java.util.Map;
 
 import static dev.rexijie.oauth.oauth2server.error.OAuthError.INVALID_SCOPE_ERROR;

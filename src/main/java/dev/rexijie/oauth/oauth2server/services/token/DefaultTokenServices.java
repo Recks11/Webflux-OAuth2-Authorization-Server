@@ -1,8 +1,9 @@
-package dev.rexijie.oauth.oauth2server.services;
+package dev.rexijie.oauth.oauth2server.services.token;
 
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import dev.rexijie.oauth.oauth2server.api.domain.RefreshTokenRequest;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
+import dev.rexijie.oauth.oauth2server.services.client.ClientService;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.enhancer.TokenEnhancer;
 import org.slf4j.Logger;
@@ -58,7 +59,7 @@ public class DefaultTokenServices implements TokenServices {
                 Instant.now(),
                 Instant.now().plusSeconds(clientMetaData.getAccessTokenValidity()),
                 auth2Authentication.getStoredRequest().getScopes()); // TODO (modify to get scopes a user can have?)
-
+        LOG.info("crating access token");
         return getTokenEnhancer().enhance(oauthToken, authentication);
     }
 
