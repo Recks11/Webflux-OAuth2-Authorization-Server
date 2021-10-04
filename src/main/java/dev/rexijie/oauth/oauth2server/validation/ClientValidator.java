@@ -6,6 +6,8 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.Validator;
 
+import java.util.Collection;
+
 public class ClientValidator implements Validator {
     private static final int MINIMUM_LENGTH = 1;
 
@@ -17,10 +19,17 @@ public class ClientValidator implements Validator {
         ValidationUtils.rejectIfEmptyOrWhitespace(errors, "clientName", "field.required");
         ClientDTO client = (ClientDTO) target;
 
-        if (client.getGrantTypes().size() < 1) {
-            errors.rejectValue("authorizedGrantTypes", "field.min.length",
+        rejectValue(errors, client.getRedirectUris(), "redirectUris", "redirect uri");
+        rejectValue(errors, client.getGrantTypes(), "grantTypes", "grant type");
+        rejectValue(errors, client.getScopes(), "scopes", "scope");
+        rejectValue(errors, client.getResourceIds(), "resourceIds", "resource id");
+        rejectValue(errors, client.getAuthorities(), "authorities", "authority");
+    }
+
+    private void rejectValue(Errors errors, Collection<?> listField, String fieldName, String errorStr) {
+        if (listField == null || listField.size() < 1)
+            errors.rejectValue(fieldName, "field.min.length",
                     new Object[]{MINIMUM_LENGTH},
-                    "at least [" + MINIMUM_LENGTH + "] grant type must be provided");
-        }
+                    "at least [ %s ] %s must be provided".formatted(MINIMUM_LENGTH, errorStr));
     }
 }
