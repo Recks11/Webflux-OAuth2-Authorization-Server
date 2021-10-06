@@ -2,6 +2,7 @@ package dev.rexijie.oauth.oauth2server.api.handlers.flows;
 
 import dev.rexijie.oauth.oauth2server.api.OAuthTest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2TokenResponse;
+import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.reactive.function.BodyInserters;
 
@@ -21,7 +22,7 @@ public class ResourceOwnerPasswordFlowTests extends OAuthTest {
                 .body(
                         BodyInserters
                                 .fromFormData("grant_type", "password")
-                                .with(USERNAME_ATTRIBUTE, getDefaultUser().getUsername())
+                                .with(USERNAME_ATTRIBUTE, ModelMocks.testUser().getUsername())
                                 .with(PASSWORD_ATTRIBUTE, "password")
                                 .with("scopes", "read"))
                 .exchange()

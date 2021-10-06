@@ -1,7 +1,6 @@
 package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
-import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.services.ReactiveAuthorizationCodeServices;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,13 +14,12 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
-import static dev.rexijie.oauth.oauth2server.error.OAuthError.INVALID_SCOPE_ERROR;
-import static dev.rexijie.oauth.oauth2server.error.OAuthError.OAuthErrors.UNSUPPORTED_GRANT_TYPE;
+import static dev.rexijie.oauth.oauth2server.error.OAuthError.*;
 
 @Component
 public class CompositeTokenGranter implements TokenGranter {
 
-    private final Map<String, TokenGranter> tokenGranterMap;
+    private final Map<AuthorizationGrantType, TokenGranter> tokenGranterMap;
 
     public CompositeTokenGranter(TokenServices tokenServices,
                                  @Qualifier("userAuthenticationManager") ReactiveAuthenticationManager userAuthenticationManager,
@@ -29,25 +27,32 @@ public class CompositeTokenGranter implements TokenGranter {
                                  ReactiveAuthorizationCodeServices authorizationCodeServices) {
 
         this.tokenGranterMap = Map.of(
-                AuthorizationGrantType.PASSWORD.getValue(), new ResourceOwnerPasswordCredentialsTokenGranter(tokenServices, userAuthenticationManager),
-                AuthorizationGrantType.AUTHORIZATION_CODE.getValue(), new AuthorizationCodeTokenGranter(tokenServices, authorizationCodeServices)
+                AuthorizationGrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenServices, userAuthenticationManager),
+                AuthorizationGrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenServices, authorizationCodeServices),
+                AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenServices, clientAuthenticationManager)
         );
     }
 
     @Override
     public Mono<Void> validateRequest(AuthorizationRequest request) {
         if (request.getScopes().isEmpty()) return Mono.error(INVALID_SCOPE_ERROR);
+        if (request.getGrantType() == null) return Mono.error(INVALID_REQUEST_ERROR);
         return Mono.empty();
     }
 
     @Override
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
         Mono<OAuth2Token> tokenGranterMono = Mono.just(tokenGranterMap)
-                .map(map -> map.get(authorizationRequest.getGrantType()))
-                .doOnError(err -> {throw Exceptions.propagate(new OAuthError(UNSUPPORTED_GRANT_TYPE));})
+                .map(granters -> getTokenGranterForRequest(authorizationRequest))
                 .flatMap(tokenGranter -> tokenGranter.grantToken(authentication, authorizationRequest));
 
         return validateRequest(authorizationRequest)
                 .then(tokenGranterMono);
+    }
+
+    private TokenGranter getTokenGranterForRequest(AuthorizationRequest authorizationRequest) {
+        var grantType = new AuthorizationGrantType(authorizationRequest.getGrantType());
+        if (!tokenGranterMap.containsKey(grantType)) throw Exceptions.propagate(UNSUPPORTED_GRANT_TYPE_ERROR);
+        return tokenGranterMap.get(grantType);
     }
 }

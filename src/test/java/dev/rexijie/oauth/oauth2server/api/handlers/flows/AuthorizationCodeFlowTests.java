@@ -2,6 +2,7 @@ package dev.rexijie.oauth.oauth2server.api.handlers.flows;
 
 import dev.rexijie.oauth.oauth2server.api.OAuthTest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2TokenResponse;
+import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -74,7 +75,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
     void when_approval_then_redirect_to_redirect_uri() {
         var session = responseCookieState.get("COOKIE");
         // approve or deny scopes
-        String clientUrlPattern = getDefaultClient().registeredRedirectUris().toArray()[0].toString() + "(.)+";
+        String clientUrlPattern = ModelMocks.testClient().registeredRedirectUris().toArray()[0].toString() + "(.)+";
         FluxExchangeResult<Object> approveDenyScopes = authClient()
                 .post()
                 .uri(getUriBuilder().replacePath(APPROVAL_ENDPOINT).build().toString())
@@ -100,8 +101,8 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .body(BodyInserters.
                         fromFormData("grant_type", "authorization_code")
                         .with("code", "generated_code")
-                        .with("client_id", getDefaultClient().clientId())
-                        .with("redirect_uri", getDefaultClient().registeredRedirectUris().toArray(new String[]{})[0])
+                        .with("client_id", ModelMocks.testClient().clientId())
+                        .with("redirect_uri", ModelMocks.testClient().registeredRedirectUris().toArray(new String[]{})[0])
                         .with("scopes", "read write")
                         .with("nonce", "random_nonce_string")
                         .with("state", "random_state"))

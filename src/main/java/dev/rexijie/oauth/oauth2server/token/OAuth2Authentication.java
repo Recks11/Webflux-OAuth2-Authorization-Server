@@ -5,10 +5,13 @@ import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
 
 import java.io.Serial;
+import java.sql.Date;
+import java.time.Instant;
 import java.util.Collection;
 
 /**
@@ -24,6 +27,7 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
     private Object credentials;
     @JsonIgnore
     private OAuth2AuthorizationRequest authorizationRequest;
+    private final long authenticationTime;
 
     public OAuth2Authentication(Object principal, Object credentials) {
         this(principal, credentials, null);
@@ -42,6 +46,7 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
         this.principal = principal;
         this.credentials = credentials;
         this.authenticationStage = AuthenticationStage.STARTED;
+        this.authenticationTime = Date.from(Instant.now()).getTime();
     }
 
     public OAuth2Authentication(Object principal, Object credentials,
@@ -49,6 +54,16 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
                                 OAuth2AuthorizationRequest authorizationRequest) {
         this(principal, credentials, authorities);
         this.authorizationRequest = authorizationRequest;
+    }
+
+    private OAuth2Authentication(Object principal, Object credentials,
+                                 Collection<? extends GrantedAuthority> authorities,
+                                 long authenticationTime) {
+        super(authorities);
+        this.principal = principal;
+        this.credentials = credentials;
+        this.authenticationStage = AuthenticationStage.STARTED;
+        this.authenticationTime = authenticationTime;
     }
 
     @Override
@@ -91,9 +106,26 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
         return getAuthorizationRequest().userAuthentication();
     }
 
+    public long getAuthenticationTime() {
+        return authenticationTime;
+    }
+
     @Override
     public void eraseCredentials() {
         super.eraseCredentials();
         this.credentials = null;
+    }
+
+    public static OAuth2Authentication from(Authentication authentication) {
+        OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) authentication;
+        OAuth2Authentication auth = new OAuth2Authentication(oAuth2Authentication.getPrincipal(),
+                oAuth2Authentication.getCredentials(),
+                oAuth2Authentication.getAuthorities(),
+                oAuth2Authentication.getAuthenticationTime());
+        auth.setAuthenticated(authentication.isAuthenticated());
+        auth.setDetails(oAuth2Authentication.getDetails());
+        auth.setAuthenticationStage(oAuth2Authentication.getAuthenticationStage());
+        auth.setAuthorizationRequest(oAuth2Authentication.getAuthorizationRequest());
+        return auth;
     }
 }

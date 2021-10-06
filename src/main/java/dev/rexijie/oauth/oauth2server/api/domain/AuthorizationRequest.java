@@ -21,8 +21,8 @@ public class AuthorizationRequest {
     private String prompt;
     private String includeGrantedScopes;
     private String responseMode;
-    private String code_challenge;
-    private String code_challenge_method;
+    private String codeChallenge;
+    private String codeChallengeMethod;
     private Map<String, Object> attributes = new LinkedHashMap<>();
 
     public AuthorizationRequest() {
@@ -43,14 +43,14 @@ public class AuthorizationRequest {
                                 String clientId, String redirectUri,
                                 String scopes, String nonce,
                                 String state, String prompt, String includeGrantedScopes,
-                                String responseMode, String code_challenge,
-                                String code_challenge_method, Map<String, Object> attributes) {
+                                String responseMode, String codeChallenge,
+                                String codeChallengeMethod, Map<String, Object> attributes) {
         this(grantType, responseType, clientId, redirectUri, scopes, nonce, state);
         this.prompt = prompt;
         this.includeGrantedScopes = includeGrantedScopes;
         this.responseMode = responseMode;
-        this.code_challenge = code_challenge;
-        this.code_challenge_method = code_challenge_method;
+        this.codeChallenge = codeChallenge;
+        this.codeChallengeMethod = codeChallengeMethod;
         this.attributes = attributes;
     }
 
@@ -66,6 +66,11 @@ public class AuthorizationRequest {
         );
         request.attributes = new LinkedHashMap<>();
         request.attributes.putAll(paramsMap);
+        request.setPrompt(paramsMap.remove("prompt"));
+        request.setIncludeGrantedScopes(paramsMap.remove("include_granted_scopes"));
+        request.setResponseMode(paramsMap.remove("response_mode"));
+        request.setCodeChallenge(paramsMap.remove("code_challenge"));
+        request.setCodeChallengeMethod(paramsMap.remove("code_challenge_method"));
         return request;
     }
 
@@ -153,20 +158,20 @@ public class AuthorizationRequest {
         this.responseMode = responseMode;
     }
 
-    public String getCode_challenge() {
-        return code_challenge;
+    public String getCodeChallenge() {
+        return codeChallenge;
     }
 
-    public void setCode_challenge(String code_challenge) {
-        this.code_challenge = code_challenge;
+    public void setCodeChallenge(String codeChallenge) {
+        this.codeChallenge = codeChallenge;
     }
 
-    public String getCode_challenge_method() {
-        return code_challenge_method;
+    public String getCodeChallengeMethod() {
+        return codeChallengeMethod;
     }
 
-    public void setCode_challenge_method(String code_challenge_method) {
-        this.code_challenge_method = code_challenge_method;
+    public void setCodeChallengeMethod(String codeChallengeMethod) {
+        this.codeChallengeMethod = codeChallengeMethod;
     }
 
     public Map<String, Object> getAttributes() {
@@ -193,8 +198,8 @@ public class AuthorizationRequest {
                 && Objects.equals(getNonce(), that.getNonce()) && Objects.equals(getState(), that.getState())
                 && Objects.equals(getPrompt(), that.getPrompt()) && Objects.equals(getIncludeGrantedScopes(),
                 that.getIncludeGrantedScopes()) && Objects.equals(getResponseMode(), that.getResponseMode()) &&
-                Objects.equals(getCode_challenge(), that.getCode_challenge()) && Objects.equals(getCode_challenge_method(),
-                that.getCode_challenge_method()) && Objects.equals(getAttributes(), that.getAttributes());
+                Objects.equals(getCodeChallenge(), that.getCodeChallenge()) && Objects.equals(getCodeChallengeMethod(),
+                that.getCodeChallengeMethod()) && Objects.equals(getAttributes(), that.getAttributes());
     }
 
     @Override
@@ -203,7 +208,7 @@ public class AuthorizationRequest {
                 getClientId(), getRedirectUri(), getScopes(),
                 getNonce(), getState(), getPrompt(),
                 getIncludeGrantedScopes(), getResponseMode(),
-                getCode_challenge(), getCode_challenge_method(),
+                getCodeChallenge(), getCodeChallengeMethod(),
                 getAttributes());
     }
 
@@ -220,8 +225,8 @@ public class AuthorizationRequest {
                 ", prompt='" + prompt + '\'' +
                 ", includeGrantedScopes='" + includeGrantedScopes + '\'' +
                 ", responseMode='" + responseMode + '\'' +
-                ", code_challenge='" + code_challenge + '\'' +
-                ", code_challenge_method='" + code_challenge_method + '\'' +
+                ", codeChallenge='" + codeChallenge + '\'' +
+                ", codeChallengeMethod='" + codeChallengeMethod + '\'' +
                 ", attributes=" + attributes +
                 '}';
     }

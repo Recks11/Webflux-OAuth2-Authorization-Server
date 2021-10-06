@@ -2,6 +2,7 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
@@ -42,14 +43,10 @@ public abstract class AbstractOAuth2TokenGranter implements TokenGranter {
      */
     protected OAuth2Authentication createAuthenticationToken(Authentication authentication,
                                                              OAuth2AuthorizationRequest authorizationRequest) {
-        OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) authentication;
-        OAuth2Authentication auth = new OAuth2Authentication(oAuth2Authentication.getPrincipal(),
-                oAuth2Authentication.getCredentials(),
-                oAuth2Authentication.getAuthorities(),
-                authorizationRequest);
-        auth.setAuthenticated(authentication.isAuthenticated());
-        auth.setDetails(oAuth2Authentication.getDetails());
-        return auth;
+        OAuth2Authentication oAuth2Authentication = OAuth2Authentication.from(authentication);
+        oAuth2Authentication.setAuthorizationRequest(authorizationRequest);
+        oAuth2Authentication.setAuthenticationStage(AuthenticationStage.COMPLETE);
+        return oAuth2Authentication;
     }
 
     protected TokenServices getTokenServices() {

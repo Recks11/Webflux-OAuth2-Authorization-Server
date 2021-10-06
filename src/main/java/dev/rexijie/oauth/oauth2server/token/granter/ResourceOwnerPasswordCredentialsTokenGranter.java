@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.core.OAuth2Token;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
-import static dev.rexijie.oauth.oauth2server.error.OAuthError.INVALID_SCOPE_ERROR;
+import static dev.rexijie.oauth.oauth2server.error.OAuthError.INVALID_GRANT_ERROR;
 
 public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractOAuth2TokenGranter {
 
@@ -22,7 +22,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractOAuth2
     @Override
     public Mono<Void> validateRequest(AuthorizationRequest request) {
         if (!AuthorizationGrantType.PASSWORD.equals(new AuthorizationGrantType(request.getGrantType())))
-            return Mono.error(INVALID_SCOPE_ERROR);
+            return Mono.error(INVALID_GRANT_ERROR);
         return Mono.empty();
     }
 

@@ -32,7 +32,7 @@ class UserEndpointHandlerTest extends OAuthTest {
     void whenFindUser_thenOk() {
         authClient()
                 .get()
-                .uri("/api/users/%s".formatted(getDefaultUser().getUsername()))
+                .uri("/api/users/%s".formatted(testUser().getUsername()))
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()

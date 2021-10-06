@@ -5,8 +5,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
+import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.Signer;
-import dev.rexijie.oauth.oauth2server.util.TimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -21,11 +21,12 @@ import reactor.core.publisher.Mono;
 import java.sql.Date;
 import java.text.ParseException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.AUTH_TIME;
 
 /**
  * A JWT token enhancer that takes an {@link OAuth2AccessToken} and generates a serialized jwt access token, and refresh token.
@@ -77,7 +78,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 .issuer(properties.openId().issuer())
                 .subject(tokenInfo.get("username"))
                 .audience(authentication.getPrincipal().toString())
-                .claim("auth_time", TimeUtils.localDateTimeToEpochSecond(LocalDateTime.now()))
+                .claim(AUTH_TIME, ((OAuth2Authentication) authentication).getAuthenticationTime())
                 .notBeforeTime(Date.from(Instant.now()))
                 .issueTime(Date.from(Instant.now()))
                 .expirationTime(Date.from(Instant.now().plus(360, ChronoUnit.SECONDS)))

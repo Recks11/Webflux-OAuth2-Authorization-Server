@@ -62,4 +62,19 @@ public class ModelMocks {
                 )
         );
     }
+
+
+    public static Client getDefaultClient(String password) {
+        return ModelMocks.testClient("test-client", password);
+    }
+
+    public static User getDefaultUser(String password) {
+        User testUser = ModelMocks.testUser(password);
+        testUser.setAccountNonLocked(true);
+        testUser.setEnabled(true);
+        testUser.setAccountNonExpired(true);
+        testUser.setCredentialsNonExpired(true);
+        return testUser;
+    }
+
 }

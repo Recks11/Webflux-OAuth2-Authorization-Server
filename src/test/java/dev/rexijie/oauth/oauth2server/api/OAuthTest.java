@@ -6,7 +6,6 @@ import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationSerializationWrapper;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.generators.RandomStringSecretGenerator;
-import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.model.User;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
@@ -17,8 +16,6 @@ import dev.rexijie.oauth.oauth2server.services.DefaultReactiveAuthorizationCodeS
 import dev.rexijie.oauth.oauth2server.token.OAuth2ApprovalAuthorizationToken;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.mockito.internal.stubbing.answers.ReturnsArgumentAt;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,11 +30,15 @@ import reactor.core.publisher.Mono;
 
 import java.util.Base64;
 
+import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultClient;
+import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultUser;
+import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.when;
 
 
+// TODO (convert to integration test)
 @SpringBootTest
 @AutoConfigureWebTestClient
 @ActiveProfiles("test")
@@ -61,11 +62,13 @@ public abstract class OAuthTest {
 
     @BeforeEach
     void initializeClient() {
-        when(clientRepository.findByClientId(getDefaultClient().clientId()))
-                .thenReturn(Mono.just(getDefaultClient()));
+        var client = testClient();
+        var user = testUser();
+        when(clientRepository.findByClientId(client.clientId()))
+                .thenReturn(Mono.just(client));
 
-        when(userRepository.findByUsername(getDefaultUser().getUsername()))
-                .thenReturn(Mono.just(getDefaultUser()));
+        when(userRepository.findByUsername(user.getUsername()))
+                .thenReturn(Mono.just(user));
 
         when(clientRepository.save(any(Client.class)))
                 .then(returnsMonoAtArg());
@@ -106,21 +109,22 @@ public abstract class OAuthTest {
     }
 
     protected OAuth2ApprovalAuthorizationToken getApprovalToken() {
+        var client = testClient();
         var token = new OAuth2ApprovalAuthorizationToken(
                 "rexijie",
                 "[YOU THOUGHT]",
                 new AuthorizationRequest(
                         "authorization_code",
                         "code",
-                        getDefaultClient().clientId(),
-                        getDefaultClient().registeredRedirectUris().toArray(new String[]{})[0],
+                        client.clientId(),
+                        client.registeredRedirectUris().toArray(new String[]{})[0],
                         "read write",
                         "random_nonce_string",
                         "random_state"
                 )
         );
         token.setApprovalTokenId("eyJhdXRob3JpdGIlcyl6W10sImRidGFp");
-        token.setDetails(ClientDTO.ClientMapper.toDto(getDefaultClient()));
+        token.setDetails(ClientDTO.ClientMapper.toDto(client));
         token.setAuthenticated(true);
         token.approve("read");
         token.approve("write");
@@ -139,39 +143,25 @@ public abstract class OAuthTest {
         }
     }
 
-    public static Answer<?> returnsMonoAtArg() {
-        return invocation -> {
-            ReturnsArgumentAt returnsArgumentAt = new ReturnsArgumentAt(0);
-//            returnsArgumentAt.validateFor(invocation);
-            Object answer = returnsArgumentAt.answer(invocation);
-            return Mono.just(answer);
-        };
-    }
-
-    protected Client getDefaultClient() {
-        return ModelMocks.testClient("test-client", passwordEncoder.encode("secret"));
-    }
-
-    protected User getDefaultUser() {
-        User testUser = ModelMocks.testUser(passwordEncoder.encode("password"));
-        testUser.setAccountNonLocked(true);
-        testUser.setEnabled(true);
-        testUser.setAccountNonExpired(true);
-        testUser.setCredentialsNonExpired(true);
-        return testUser;
-    }
-
     protected UriBuilder getUriBuilder() {
+        var client = testClient();
         return new DefaultUriBuilderFactory().builder()
                 .path(AUTHORIZATION_ENDPOINT)
                 .queryParam("grant_type", "authorization_code")
                 .queryParam("response_type", "code")
-                .queryParam("redirect_uri", getDefaultClient().registeredRedirectUris().toArray()[0])
-                .queryParam("client_id", getDefaultClient().clientId())
+                .queryParam("redirect_uri", client.registeredRedirectUris().toArray()[0])
+                .queryParam("client_id", client.clientId())
                 .queryParam("scopes", "read write")
                 .queryParam("state", "random_state")
                 .queryParam("nonce", "random_nonce_string");
 
     }
 
+    private Client testClient() {
+        return getDefaultClient(passwordEncoder.encode("secret"));
+    }
+
+    private User testUser() {
+        return getDefaultUser(passwordEncoder.encode("password"));
+    }
 }
