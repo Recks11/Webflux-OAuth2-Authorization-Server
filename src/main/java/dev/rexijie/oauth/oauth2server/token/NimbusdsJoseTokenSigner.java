@@ -4,7 +4,6 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.factories.DefaultJWSSignerFactory;
 import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKException;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.proc.BadJWSException;
@@ -16,7 +15,6 @@ import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairContainer;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.JwtException;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
@@ -67,20 +65,21 @@ public class NimbusdsJoseTokenSigner implements Signer {
     }
 
 
-    // Create RSA-signer with the private key
-    private JWSSigner createSignerForRSAKey(JWK key) {
-        try {
-            return jwsSignerFactory.createJWSSigner(key);
-        } catch (JOSEException exception) {
-            throw Exceptions.propagate(exception);
-        }
-    }
-
     private JWSHeader populateHeader(KeySigningContext context) {
 
         return new JWSHeader.Builder(context.getAlgorithm())
                 .keyID(context.getParsedKey().getKeyID())
                 .build();
+    }
+
+    private Mono<KeySigningContext> createSignatureContext(PlainJWT token) {
+        return Mono.just(new KeySigningContext(token))
+                .map(keySigningContext -> {
+                    var id = token.getHeader().getCustomParam(SIGNING_KEY_ID).toString();
+                    keySigningContext.setContainer(keyPairStore.getKeyPair(id));
+                    return keySigningContext;
+                })
+                .flatMap(this::populateContext);
     }
 
     private Mono<KeySigningContext> populateContext(KeySigningContext context) {
@@ -96,22 +95,21 @@ public class NimbusdsJoseTokenSigner implements Signer {
                         throw Exceptions.propagate(e);
                     }
                 }).map(ctx -> {
-                    ctx.setSigner(createSignerForRSAKey(ctx.parsedKey));
+                    ctx.setSigner(createSignerForKey(ctx.parsedKey));
                     return ctx;
                 });
     }
 
-
-    private Mono<KeySigningContext> createSignatureContext(PlainJWT token) {
-        return Mono.just(new KeySigningContext(token))
-                .map(keySigningContext -> {
-                    var id = token.getHeader().getCustomParam(SIGNING_KEY_ID).toString();
-                    keySigningContext.setContainer(keyPairStore.getKeyPair(id));
-                    return keySigningContext;
-                })
-                .flatMap(this::populateContext);
+    // Create RSA-signer with the private key
+    private JWSSigner createSignerForKey(JWK key) {
+        try {
+            return jwsSignerFactory.createJWSSigner(key);
+        } catch (JOSEException exception) {
+            throw Exceptions.propagate(exception);
+        }
     }
 
+    // build the signing key for the context with the provided use
     private JWK buildKey(KeySigningContext context, KeyUse keyUse) throws BadJWSException {
         var container = context.getContainer();
         String alg = container.getKeyAlgorithm();

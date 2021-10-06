@@ -54,16 +54,20 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 .doOnError(throwable -> {throw Exceptions.propagate(throwable);})
                 .map(signedJwt -> {
                     try {
-                        return new OAuth2AccessToken(
-                                OAuth2AccessToken.TokenType.BEARER,
-                                signedJwt,
-                                jwtToken.getJWTClaimsSet().getIssueTime().toInstant(),
-                                jwtToken.getJWTClaimsSet().getExpirationTime().toInstant(),
-                                token.getScopes());
+                        return createAccessToken(signedJwt, jwtToken.getJWTClaimsSet(), token);
                     } catch (ParseException e) {
                         throw Exceptions.propagate(e);
                     }
                 });
+    }
+
+    private OAuth2AccessToken createAccessToken(String token, JWTClaimsSet claimSet, OAuth2AccessToken authToken) {
+        return new OAuth2AccessToken(
+                OAuth2AccessToken.TokenType.BEARER,
+                token,
+                claimSet.getIssueTime().toInstant(),
+                claimSet.getExpirationTime().toInstant(),
+                authToken.getScopes());
     }
 
     private PlainJWT enhanceToken(OAuth2AccessToken token, Authentication authentication) {
@@ -80,7 +84,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 .build();
 
         var header = new PlainHeader.Builder()
-                .customParam(Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME)
+                .customParam(Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME) // set the key to use while signing
                 .build();
         LOG.debug("Successfully Enhanced authentication token");
         return new PlainJWT(header, claimsSet);
