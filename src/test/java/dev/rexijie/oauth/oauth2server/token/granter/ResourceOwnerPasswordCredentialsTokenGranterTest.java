@@ -9,6 +9,7 @@ import dev.rexijie.oauth.oauth2server.services.user.DefaultReactiveUserDetailsSe
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -19,7 +20,7 @@ import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.Authentication.cre
 import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class ResourceOwnerPasswordCredentialsTokenGranterTest extends TokenGranterTest {
 
@@ -59,6 +60,8 @@ class ResourceOwnerPasswordCredentialsTokenGranterTest extends TokenGranterTest 
         StepVerifier.create(oAuth2TokenMono)
                 .consumeNextWith(auth2Token -> {
                     assertThat(auth2Token).isNotNull();
+                    verify(tokenEnhancer, times(1))
+                            .enhance(any(OAuth2AccessToken.class), any(Authentication.class));
                 }).verifyComplete();
     }
 }
