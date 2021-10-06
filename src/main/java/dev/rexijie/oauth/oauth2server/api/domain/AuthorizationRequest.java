@@ -54,7 +54,8 @@ public class AuthorizationRequest {
         this.attributes = attributes;
     }
 
-    public static AuthorizationRequest from(Map<String, String> paramsMap) {
+    public static AuthorizationRequest from(Map<String, String> claimsMap) {
+        var paramsMap = new HashMap<>(claimsMap);
         final var request = new AuthorizationRequest(
                 paramsMap.remove("grant_type"),
                 paramsMap.remove("response_type"),

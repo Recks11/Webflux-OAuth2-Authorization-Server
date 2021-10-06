@@ -2,27 +2,30 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
-import dev.rexijie.oauth.oauth2server.auth.AuthenticationSerializationWrapper;
-import dev.rexijie.oauth.oauth2server.generators.RandomStringSecretGenerator;
+import dev.rexijie.oauth.oauth2server.auth.manager.ReactiveClientAuthenticationManager;
+import dev.rexijie.oauth.oauth2server.auth.manager.ReactiveUserAuthenticationManager;
+import dev.rexijie.oauth.oauth2server.mocks.ServiceMocks;
 import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.model.User;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.repository.AuthorizationCodeRepository;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
-import dev.rexijie.oauth.oauth2server.services.DefaultReactiveAuthorizationCodeServices;
+import dev.rexijie.oauth.oauth2server.services.client.ClientService;
+import dev.rexijie.oauth.oauth2server.services.client.DefaultClientDetailsService;
+import dev.rexijie.oauth.oauth2server.services.client.DefaultClientService;
+import dev.rexijie.oauth.oauth2server.services.token.DefaultTokenServices;
+import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
+import dev.rexijie.oauth.oauth2server.services.user.DefaultReactiveUserDetailsService;
 import dev.rexijie.oauth.oauth2server.token.OAuth2ApprovalAuthorizationToken;
+import dev.rexijie.oauth.oauth2server.token.enhancer.TokenEnhancer;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.core.token.KeyBasedPersistenceTokenService;
-import org.springframework.security.core.token.SecureRandomFactoryBean;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.token.TokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import reactor.core.publisher.Mono;
-
-import java.security.SecureRandom;
-import java.security.SecureRandomParameters;
-import java.security.SecureRandomSpi;
 
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultClient;
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultUser;
@@ -30,73 +33,53 @@ import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public abstract class TokenGranterTest {
 
-    @MockBean
-    protected UserRepository userRepository;
-    @MockBean
-    protected ClientRepository clientRepository;
-    @MockBean
-    protected AuthorizationCodeRepository codeRepository;
-    protected KeyBasedPersistenceTokenService tokenService;
+    @Mock protected UserRepository userRepository;
+    @Mock protected ClientRepository clientRepository;
+    @Mock protected AuthorizationCodeRepository codeRepository;
+    @Mock protected TokenEnhancer tokenEnhancer;
+    protected ClientService clientService;
+    protected TokenService tokenService;
+    protected TokenServices tokenServices;
     protected ObjectMapper objectMapper;
     protected PasswordEncoder encoder;
+    protected ReactiveUserAuthenticationManager reactiveUserAuthenticationManager;
+    protected ReactiveClientAuthenticationManager reactiveClientAuthenticationManager;
 
     @BeforeEach
     void initializeClient() {
-        objectMapper = new ObjectMapper();
-        encoder = new BCryptPasswordEncoder();
-        tokenService = new KeyBasedPersistenceTokenService();
-        tokenService.setServerSecret("stoke-serbert");
-        tokenService.setServerInteger(42001);
-        tokenService.setPseudoRandomNumberBytes(64);
-        try {
-            tokenService.setSecureRandom(new SecureRandomFactoryBean().getObject());
-        } catch (Exception exception) {
-            //
-        }
+        objectMapper = ServiceMocks.ConfigBeans.testObjectMapper();
+        encoder = ServiceMocks.ConfigBeans.testPasswordEncoder();
+        tokenService = ServiceMocks.ConfigBeans.testTokenService();
 
-        when(clientRepository.findByClientId(testClient().clientId()))
-                .thenReturn(Mono.just(testClient()));
+        clientService = new DefaultClientService(
+                clientRepository, ServiceMocks.ConfigBeans.credentialsGenerator(),  encoder);
+        tokenServices = new DefaultTokenServices(
+                clientService,
+                tokenEnhancer,
+                tokenService);
 
-        when(userRepository.findByUsername(testUser().getUsername()))
-                .thenReturn(Mono.just(testUser()));
+        reactiveUserAuthenticationManager = new ReactiveUserAuthenticationManager(
+                new DefaultReactiveUserDetailsService(userRepository)
+        );
+        reactiveUserAuthenticationManager.setPasswordEncoder(encoder);
 
-        when(clientRepository.save(any(Client.class)))
+        reactiveClientAuthenticationManager = new ReactiveClientAuthenticationManager(
+                new DefaultClientDetailsService(clientRepository, encoder)
+        );
+
+        when(tokenEnhancer.enhance(any(), any(Authentication.class)))
                 .then(returnsMonoAtArg());
-
-        when(userRepository.save(any(User.class)))
-                .then(returnsMonoAtArg());
-
-        when(codeRepository.save(any(AuthenticationSerializationWrapper.class)))
-                .then(returnsMonoAtArg());
-
-        when(codeRepository.findByCode(any(String.class)))
-                .thenReturn(Mono.just(getAuthenticationWrapper()));
-
-        when(clientRepository.deleteAll()).thenReturn(Mono.empty());
-        when(userRepository.deleteAll()).thenReturn(Mono.empty());
-
         setUp();
     }
 
-    private AuthenticationSerializationWrapper getAuthenticationWrapper() {
-        var add = new DefaultReactiveAuthorizationCodeServices(null, null, null, null,
-                new RandomStringSecretGenerator());
-        try {
-            return new AuthenticationSerializationWrapper("authentication_code",
-                    tokenService.allocateToken(add.createAdditionalInformation(getApprovalToken())).getKey(),
-                    objectMapper.writeValueAsBytes(getApprovalToken()));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Client testClient() {
+    protected Client testClient() {
         return getDefaultClient(encoder.encode("secret"));
     }
 
-    private User testUser() {
+    protected User testUser() {
         return getDefaultUser(encoder.encode("password"));
     }
 

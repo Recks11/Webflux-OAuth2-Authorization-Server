@@ -3,7 +3,6 @@ package dev.rexijie.oauth.oauth2server.token;
 import com.nimbusds.jose.PlainHeader;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
-import com.nimbusds.oauth2.sdk.util.JWTClaimsSetUtils;
 import dev.rexijie.oauth.oauth2server.generators.KeyGen;
 import dev.rexijie.oauth.oauth2server.security.keys.InMemoryRSAKeyPairStore;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
@@ -18,12 +17,9 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NimbusdsJoseTokenSignerTest {
 
