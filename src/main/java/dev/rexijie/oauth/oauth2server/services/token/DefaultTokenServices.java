@@ -41,8 +41,8 @@ public class DefaultTokenServices implements TokenServices {
 
     /**
      * Create an access token from an authenticated client provided an authorization request
-     *
-     * @param authentication       client userAuthentication
+     * the authentication passed must be a {@link OAuth2Authentication} containing the client authentication
+     * @param authentication   client authentication
      */
     @Override
     public Mono<OAuth2Token> createAccessToken(Authentication authentication) {

@@ -50,7 +50,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
 
     @Override
     public Mono<OAuth2Token> enhance(OAuth2AccessToken token, Authentication authentication) {
-        var jwtToken = enhanceToken(token, authentication);
+        var jwtToken = createToken(token, authentication);
         return jwtSigner.sign(jwtToken)
                 .doOnError(throwable -> {throw Exceptions.propagate(throwable);})
                 .map(signedJwt -> {
@@ -71,7 +71,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 authToken.getScopes());
     }
 
-    private PlainJWT enhanceToken(OAuth2AccessToken token, Authentication authentication) {
+    private PlainJWT createToken(OAuth2AccessToken token, Authentication authentication) {
         var tokenInfo = extractAdditionalInformationFromToken(token.getTokenValue());
         var claimsSet = new JWTClaimsSet.Builder()
                 .jwtID(token.getTokenValue().substring(0, 32))
@@ -90,6 +90,10 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
         LOG.debug("Successfully Enhanced authentication token");
         return new PlainJWT(header, claimsSet);
     }
+
+//    private PlainJWT createApprovalToken(OAuth2AccessToken token, Authentication authentication) {
+//        return new PlainJWT();
+//    }
 
     private Map<String, String> extractAdditionalInformationFromToken(String value) {
         Token token = tokenService.verifyToken(value);
