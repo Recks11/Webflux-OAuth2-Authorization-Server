@@ -5,6 +5,8 @@ import dev.rexijie.oauth.oauth2server.error.ApiError;
 import dev.rexijie.oauth.oauth2server.generators.CredentialsGenerator;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.Exceptions;
@@ -13,6 +15,7 @@ import reactor.core.publisher.Mono;
 // TODO (Add Validation)
 @Service
 public class DefaultClientService implements ClientService {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultClientService.class);
     private final ClientRepository clientRepository;
     private final CredentialsGenerator<ClientCredentials> credentialsGenerator;
     private final PasswordEncoder encoder;
@@ -42,7 +45,8 @@ public class DefaultClientService implements ClientService {
                             .thenReturn(credentials);
                 }).doOnError(throwable -> {
                     throw Exceptions.propagate(throwable);
-                });
+                })
+                .doOnSuccess(credentials -> LOG.debug("Created Client: Client [id: {}, secret: [HIDDEN]]", credentials.clientId()));
 
     }
 
@@ -50,17 +54,20 @@ public class DefaultClientService implements ClientService {
     public Mono<ClientDTO> findClientById(String credentials) {
         return clientRepository.findByClientId(credentials)
                 .switchIfEmpty(Mono.error(new ApiError(404, "Client does not exist")))
-                .map(ClientDTO.ClientMapper::toDto);
+                .map(ClientDTO.ClientMapper::toDto)
+                .doOnSuccess(clientDTO -> LOG.debug("found client with id {}", credentials));
     }
 
     @Override
     public Mono<ClientDTO> findClientWithCredentials(ClientCredentials credentials) {
         return clientRepository.findByClientIdAndClientSecret(credentials.clientId(), credentials.clientSecret())
                 .switchIfEmpty(Mono.error(new ApiError(404, "Client does not exist")))
-                .map(ClientDTO.ClientMapper::toDto);
+                .map(ClientDTO.ClientMapper::toDto)
+                .doOnSuccess(clientDTO -> LOG.debug("found client with id {} and a secret", credentials.clientId()));
     }
 
-    private void validateClient(ClientDTO clientDTO) {
-        Mono.just(clientDTO);
+    private Mono<Void> validateClient(ClientDTO clientDTO) {
+        return Mono.just(clientDTO).then()
+                .doOnSuccess(clientDTO1 -> LOG.debug("validated client named {}", clientDTO.getClientName()));
     }
 }

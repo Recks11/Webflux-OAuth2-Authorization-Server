@@ -8,6 +8,8 @@ import dev.rexijie.oauth.oauth2server.repository.AuthorizationCodeRepository;
 import dev.rexijie.oauth.oauth2server.services.client.ClientService;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.token.Token;
@@ -25,6 +27,7 @@ import java.util.Optional;
  */
 @Component
 public class DefaultReactiveAuthorizationCodeServices implements ReactiveAuthorizationCodeServices {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveAuthorizationCodeServices.class);
     private static final String TOKEN_SEPARATOR = "&/";
 //    private static final String TOKEN_HASH = "t_hash";
 //    private static final String TOKEN_HASH_SEPARATOR = ":";
@@ -79,12 +82,14 @@ public class DefaultReactiveAuthorizationCodeServices implements ReactiveAuthori
     @Override
     public Mono<OAuth2Authentication> consumeAuthorizationCode(String code, Authentication authentication) {
         return authorizationCodeRepository.findByCode(code)
+                .doOnNext(authorizationCodeWrapper ->
+                        LOG.info("found authentication with code {}", authorizationCodeWrapper.getCode()))
                 .flatMap(wrapper -> {
                     Token token = tokenService.verifyToken(new String(wrapper.getAuthentication()));
                     var tuple = convertAdditionalInformation(token.getExtendedInformation());
                     String tokenValue = tuple[0].toString();
                     return tokenServices.readAuthentication(() -> tokenValue, (OAuth2Authentication) authentication);
-                });
+                }).doOnSuccess(auth -> LOG.info("successfully consumed authorization code"));
     }
 
     public String createAdditionalInformation(String tokenValue) {
