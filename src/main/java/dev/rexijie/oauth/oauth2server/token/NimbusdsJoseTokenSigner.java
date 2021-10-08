@@ -13,6 +13,11 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jwt.proc.BadJWTException;
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
+import com.nimbusds.openid.connect.sdk.claims.ClaimsSet;
+import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairContainer;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -22,15 +27,21 @@ import reactor.core.publisher.Mono;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class NimbusdsJoseTokenSigner implements Signer {
 
     private final KeyPairStore<RSAPrivateKey, RSAPublicKey> keyPairStore;
     private final JWSSignerFactory jwsSignerFactory = new DefaultJWSSignerFactory();
     private final JWSVerifierFactory jwsVerifierFactory = new DefaultJWSVerifierFactory();
+//    private final DefaultJWTProcessor<?> jwtProcessor = new DefaultJWTProcessor<>();
+    private final OAuth2Properties properties;
 
-    public NimbusdsJoseTokenSigner(KeyPairStore<RSAPrivateKey, RSAPublicKey> keyPairStore) {
+    public NimbusdsJoseTokenSigner(KeyPairStore<RSAPrivateKey, RSAPublicKey> keyPairStore,
+                                   OAuth2Properties oAuth2Properties) {
         this.keyPairStore = keyPairStore;
+        this.properties = oAuth2Properties;
     }
 
     @Override
@@ -50,20 +61,53 @@ public class NimbusdsJoseTokenSigner implements Signer {
 
     }
 
-    public Mono<Boolean> verify(String token) {
+    @Override
+    public Mono<SignedJWT> deserialize(String serializedJwt) {
         return Mono.create(monoSink -> {
-            // On the consumer side, parse the JWS and verify its RSA signature
             try {
-                var signedJWT = SignedJWT.parse(token);
-                var key = keyPairStore.getKeyPair(signedJWT.getHeader().getKeyID());
-                JWSVerifier verifier = jwsVerifierFactory.createJWSVerifier(signedJWT.getHeader(), key.getPublic());
-                monoSink.success(signedJWT.verify(verifier));
-            } catch (ParseException | JOSEException e) {
-                monoSink.error(new JwtException("invalid token", e));
+                SignedJWT parsedToken = SignedJWT.parse(serializedJwt);
+                monoSink.success(parsedToken);
+            } catch (ParseException exception) {
+                monoSink.error(new JwtException("invalid token", exception));
             }
         });
     }
 
+    public Mono<Boolean> verify(String token) {
+        return deserialize(token)
+                .flatMap(signedJWT -> Mono.create(monoSink -> {
+                    try {
+                        var key = keyPairStore.getKeyPair(signedJWT.getHeader().getKeyID());
+                        JWSVerifier verifier = jwsVerifierFactory.createJWSVerifier(signedJWT.getHeader(), key.getPublic());
+                        monoSink.success(signedJWT.verify(verifier));
+                    } catch (JOSEException e) {
+                        monoSink.error(new JwtException("invalid token", e));
+                    }
+                }));
+    }
+
+    @Override
+    public Mono<Void> verifyClaims(JWT signedJWT, OAuth2Authentication authentication) {
+        var audience = authentication.getPrincipal().toString();
+        JWTClaimsSetVerifier<?> claimsSetVerifier = new DefaultJWTClaimsVerifier<>(
+                new HashSet<>(Set.of(audience)),
+                new JWTClaimsSet.Builder()
+                        .audience(audience)
+                        .issuer(properties.openId().issuer())
+                        .build(),
+                Set.of(ClaimsSet.AUD_CLAIM_NAME, ClaimsSet.ISS_CLAIM_NAME),
+                null
+        );
+        return Mono.create(monoSink -> {
+            try {
+                claimsSetVerifier.verify(signedJWT.getJWTClaimsSet(), null);
+                monoSink.success();
+            } catch (BadJWTException | ParseException e) {
+                monoSink.error(new JwtException("invalid jwt", e));
+            }
+        });
+
+    }
 
     private JWSHeader populateHeader(KeySigningContext context) {
 

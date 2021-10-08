@@ -105,6 +105,11 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
 
     @JsonIgnore
     public Object getUserPrincipal() {
+        return getUserAuthentication().getPrincipal();
+    }
+
+    @JsonIgnore
+    public Authentication getUserAuthentication() {
         return getAuthorizationRequest().userAuthentication();
     }
 
