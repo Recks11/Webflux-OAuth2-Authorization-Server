@@ -35,4 +35,9 @@ public class ResourceOwnerPasswordFlowTests extends OAuthTest {
                     assertThat(result.getResponseBody().getScope()).contains("read");
                 });
     }
+
+    @Override
+    public void setUp() {
+
+    }
 }

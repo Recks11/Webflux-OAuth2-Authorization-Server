@@ -20,4 +20,9 @@ class TokenEndpointHandlerTest extends OAuthTest {
                 .jsonPath("$.keys")
                 .isNotEmpty();
     }
+
+    @Override
+    public void setUp() {
+
+    }
 }

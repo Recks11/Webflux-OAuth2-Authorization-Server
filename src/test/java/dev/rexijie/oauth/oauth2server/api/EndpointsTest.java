@@ -15,4 +15,9 @@ class EndpointsTest extends OAuthTest {
                 .expectStatus().isOk()
                 .expectHeader().contentType(MediaType.TEXT_HTML);
     }
+
+    @Override
+    public void setUp() {
+
+    }
 }

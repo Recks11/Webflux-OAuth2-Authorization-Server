@@ -2,6 +2,7 @@ package dev.rexijie.oauth.oauth2server.token.enhancer;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.generators.KeyGen;
 import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
@@ -33,7 +34,8 @@ class JwtGeneratingTokenEnhancerTest {
     void setUp() {
         OAuth2Properties properties = ServiceMocks.ConfigBeans.mockProperties();
         tokenService = ServiceMocks.ConfigBeans.testTokenService();
-        Signer jwtSigner = new NimbusdsJoseTokenSigner(new InMemoryRSAKeyPairStore(KeyGen.generateRSAKeys()));
+        Signer jwtSigner = new NimbusdsJoseTokenSigner(new InMemoryRSAKeyPairStore(KeyGen.generateRSAKeys())
+                , properties);
         enhancer = new JwtGeneratingTokenEnhancer(properties, tokenService, jwtSigner);
     }
 
@@ -71,6 +73,7 @@ class JwtGeneratingTokenEnhancerTest {
                 ),
                 ModelMocks.Authentication.mockUserAuthentication(ModelMocks.getDefaultUser("pwd"))
         ));
+        clientAuth.setAuthenticationStage(AuthenticationStage.COMPLETE);
         return clientAuth;
     }
 }

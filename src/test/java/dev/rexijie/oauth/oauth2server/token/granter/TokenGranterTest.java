@@ -17,6 +17,7 @@ import dev.rexijie.oauth.oauth2server.services.client.DefaultClientService;
 import dev.rexijie.oauth.oauth2server.services.token.DefaultTokenServices;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
 import dev.rexijie.oauth.oauth2server.services.user.DefaultReactiveUserDetailsService;
+import dev.rexijie.oauth.oauth2server.services.user.DefaultUserService;
 import dev.rexijie.oauth.oauth2server.token.OAuth2ApprovalAuthorizationToken;
 import dev.rexijie.oauth.oauth2server.token.enhancer.TokenEnhancer;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,8 +57,10 @@ public abstract class TokenGranterTest {
 
         clientService = new DefaultClientService(
                 clientRepository, ServiceMocks.ConfigBeans.credentialsGenerator(),  encoder);
+
         tokenServices = new DefaultTokenServices(
                 clientService,
+                new DefaultUserService(userRepository, encoder, objectMapper),
                 tokenEnhancer,
                 tokenService);
 
@@ -81,29 +84,6 @@ public abstract class TokenGranterTest {
 
     protected User testUser() {
         return getDefaultUser(encoder.encode("password"));
-    }
-
-    protected OAuth2ApprovalAuthorizationToken getApprovalToken() {
-        var client = testClient();
-        var token = new OAuth2ApprovalAuthorizationToken(
-                "rexijie",
-                "[YOU THOUGHT]",
-                new AuthorizationRequest(
-                        "authorization_code",
-                        "code",
-                        client.clientId(),
-                        client.registeredRedirectUris().toArray(new String[]{})[0],
-                        "read write",
-                        "random_nonce_string",
-                        "random_state"
-                )
-        );
-        token.setApprovalTokenId("eyJhdXRob3JpdGIlcyl6W10sImRidGFp");
-        token.setDetails(ClientDTO.ClientMapper.toDto(client));
-        token.setAuthenticated(true);
-        token.approve("read");
-        token.approve("write");
-        return token;
     }
 
     abstract void setUp();

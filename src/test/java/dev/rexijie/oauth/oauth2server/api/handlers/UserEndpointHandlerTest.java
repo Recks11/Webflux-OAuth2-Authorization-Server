@@ -38,4 +38,9 @@ class UserEndpointHandlerTest extends OAuthTest {
                 .expectBody()
                 .jsonPath("$").isNotEmpty();
     }
+
+    @Override
+    public void setUp() {
+
+    }
 }

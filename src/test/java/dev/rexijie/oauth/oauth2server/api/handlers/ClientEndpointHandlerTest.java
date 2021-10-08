@@ -12,6 +12,11 @@ import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.testClient;
 
 class ClientEndpointHandlerTest extends OAuthTest {
 
+    @Override
+    public void setUp() {
+
+    }
+
     @Test
     void whenCreateClientWithValidClient_thenSuccess() {
         authClient()

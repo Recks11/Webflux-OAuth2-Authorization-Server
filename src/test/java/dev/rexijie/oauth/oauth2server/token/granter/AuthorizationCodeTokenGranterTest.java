@@ -1,7 +1,8 @@
 package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
-import dev.rexijie.oauth.oauth2server.auth.AuthenticationSerializationWrapper;
+import dev.rexijie.oauth.oauth2server.auth.AuthorizationCodeWrapper;
+import dev.rexijie.oauth.oauth2server.auth.EncryptedCodeAuthorizationCodeWrapper;
 import dev.rexijie.oauth.oauth2server.generators.RandomStringSecretGenerator;
 import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import dev.rexijie.oauth.oauth2server.services.DefaultReactiveAuthorizationCodeServices;
@@ -11,6 +12,8 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.nio.charset.StandardCharsets;
 
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.PASSWORD_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBUTE;
@@ -60,8 +63,8 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
                         clientService,
                         tokenService,
                         codeRepository,
-                        objectMapper,
-                        new RandomStringSecretGenerator()
+                        new RandomStringSecretGenerator(),
+                        tokenServices
                 )
         );
 
@@ -69,13 +72,13 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
                 .thenReturn(Mono.just(getAuthenticationWrapper()));
     }
 
-    private AuthenticationSerializationWrapper getAuthenticationWrapper() {
+    private AuthorizationCodeWrapper getAuthenticationWrapper() {
         var add = new DefaultReactiveAuthorizationCodeServices(null, null, null, null,
-                new RandomStringSecretGenerator());
+                null);
         try {
-            return new AuthenticationSerializationWrapper("authentication_code",
-                    tokenService.allocateToken(add.createAdditionalInformation(getApprovalToken())).getKey(),
-                    objectMapper.writeValueAsBytes(getApprovalToken()));
+            return new EncryptedCodeAuthorizationCodeWrapper("authentication_code",
+                    tokenService.allocateToken(add.createAdditionalInformation(""))
+                            .getKey().getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

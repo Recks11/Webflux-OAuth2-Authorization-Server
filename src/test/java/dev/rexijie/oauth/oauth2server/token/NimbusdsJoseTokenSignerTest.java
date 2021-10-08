@@ -4,6 +4,7 @@ import com.nimbusds.jose.PlainHeader;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import dev.rexijie.oauth.oauth2server.generators.KeyGen;
+import dev.rexijie.oauth.oauth2server.mocks.ServiceMocks;
 import dev.rexijie.oauth.oauth2server.security.keys.InMemoryRSAKeyPairStore;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
 import org.junit.jupiter.api.Assertions;
@@ -42,7 +43,7 @@ class NimbusdsJoseTokenSignerTest {
     @BeforeEach
     void setup() {
         KeyPairStore<RSAPrivateKey, RSAPublicKey> kps = new InMemoryRSAKeyPairStore(KeyGen.generateKeys());
-        signer = new NimbusdsJoseTokenSigner(kps);
+        signer = new NimbusdsJoseTokenSigner(kps, ServiceMocks.ConfigBeans.mockProperties());
     }
 
     @Test
