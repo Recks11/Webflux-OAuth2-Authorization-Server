@@ -45,7 +45,7 @@ public class SecurityEncryptionConfig {
     }
 
     @Bean
-    public TokenService authorizationCodeTokenServices(OAuth2Properties properties) {
+    public TokenService authorizationCodeTokenService(OAuth2Properties properties) {
         try {
             var secureRandom = new SecureRandomFactoryBean().getObject();
             var toS = new KeyBasedPersistenceTokenService();
@@ -71,8 +71,8 @@ public class SecurityEncryptionConfig {
     }
 
     @Bean
-    public Signer jwtSigner() {
-        return new NimbusdsJoseTokenSigner(rsaKeyStore());
+    public Signer jwtSigner(OAuth2Properties properties) {
+        return new NimbusdsJoseTokenSigner(rsaKeyStore(), properties);
     }
 
     @Bean
