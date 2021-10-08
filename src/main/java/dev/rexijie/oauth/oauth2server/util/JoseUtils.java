@@ -1,10 +1,14 @@
 package dev.rexijie.oauth.oauth2server.util;
 
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import reactor.core.publisher.Mono;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
@@ -26,5 +30,16 @@ public class JoseUtils {
                                 getEpochSecond()).getEpochSecond(),
                 new Scope()
         );
+    }
+
+    public static Mono<JWTClaimsSet> extractClaimsSet(JWT token) {
+        return Mono.create(jwtClaimsSetMonoSink -> {
+            try {
+                var claims = token.getJWTClaimsSet();
+                jwtClaimsSetMonoSink.success(claims);
+            } catch (ParseException exception) {
+                jwtClaimsSetMonoSink.error(exception);
+            }
+        });
     }
 }
