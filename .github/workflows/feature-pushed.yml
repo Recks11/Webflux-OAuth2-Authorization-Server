@@ -1,0 +1,27 @@
+name: Feature Pushed
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    name: test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 16
+          cache: maven
+      - name: Run tests
+        run: mvn clean package -Dspring.profiles.active=test
+      - name: Verify
+        run: mvn clean verify -DskipTests
+
+
+
+
+
