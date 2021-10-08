@@ -1,6 +1,8 @@
 package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
@@ -12,6 +14,7 @@ import reactor.test.StepVerifier;
 import java.util.Map;
 
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.Authentication.createClientAuthentication;
+import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -22,14 +25,9 @@ class ClientCredentialsTokenGranterTest extends TokenGranterTest {
 
     @Test
     void grantToken() {
-        AuthorizationRequest ar = AuthorizationRequest.from(Map.of(
-                "grant_type", "client_credentials",
-                "scope", "read write")
-        );
 
-        var clientAuth = createClientAuthentication(ModelMocks.getDefaultClient(encoder.encode("secret")));
-
-        Mono<OAuth2Token> oAuth2TokenMono = tokenGranter.grantToken(clientAuth, ar);
+        Mono<OAuth2Token> oAuth2TokenMono = tokenGranter.grantToken(clientAuthentication(),
+                authorizationRequest());
 
         StepVerifier.create(oAuth2TokenMono)
                 .consumeNextWith(auth2Token -> {
@@ -40,7 +38,7 @@ class ClientCredentialsTokenGranterTest extends TokenGranterTest {
     }
 
     @Override
-    void setUp() {
+    protected void setUp() {
         tokenGranter = new ClientCredentialsTokenGranter(
                 tokenServices,
                 reactiveClientAuthenticationManager
@@ -48,5 +46,16 @@ class ClientCredentialsTokenGranterTest extends TokenGranterTest {
 
 //        when(clientRepository.findByClientId(testClient().clientId()))
 //                .thenReturn(Mono.just(testClient()));
+
+//        when(tokenEnhancer.enhance(any(), any(Authentication.class)))
+//                .then(returnsMonoAtArg());
+    }
+
+    @Override
+    protected AuthorizationRequest authorizationRequest() {
+        return AuthorizationRequest.from(Map.of(
+                "grant_type", "client_credentials",
+                "scope", "read write")
+        );
     }
 }

@@ -1,13 +1,10 @@
 package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
-import dev.rexijie.oauth.oauth2server.auth.manager.ReactiveUserAuthenticationManager;
+import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
-import dev.rexijie.oauth.oauth2server.mocks.ServiceMocks;
-import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
-import dev.rexijie.oauth.oauth2server.services.user.DefaultReactiveUserDetailsService;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -27,7 +24,7 @@ class ResourceOwnerPasswordCredentialsTokenGranterTest extends TokenGranterTest 
     TokenGranter tokenGranter;
 
     @Override
-    void setUp() {
+    protected void setUp() {
         tokenGranter = new ResourceOwnerPasswordCredentialsTokenGranter(
                 tokenServices,
                 reactiveUserAuthenticationManager
@@ -35,12 +32,27 @@ class ResourceOwnerPasswordCredentialsTokenGranterTest extends TokenGranterTest 
 
         when(userRepository.findByUsername(testUser().getUsername()))
                 .thenReturn(Mono.just(testUser()));
+        when(clientRepository.findByClientId(testClient().clientId()))
+                .thenReturn(Mono.just(testClient()));
+        when(tokenEnhancer.enhance(any(), any(Authentication.class)))
+                .then(returnsMonoAtArg());
     }
 
     @Test
     void canGrantResourceOwnerClientCredentialsToken() {
-        String password = "password";
+        Mono<OAuth2Token> oAuth2TokenMono = tokenGranter.grantToken(
+                clientAuthentication(), authorizationRequest());
 
+        StepVerifier.create(oAuth2TokenMono)
+                .consumeNextWith(auth2Token -> {
+                    assertThat(auth2Token).isNotNull();
+                    verify(tokenEnhancer, times(1))
+                            .enhance(any(OAuth2AccessToken.class), any(Authentication.class));
+                }).verifyComplete();
+    }
+
+    @Override
+    protected AuthorizationRequest authorizationRequest() {
         AuthorizationRequest ar = new AuthorizationRequest(
                 "password",
                 null,
@@ -51,17 +63,8 @@ class ResourceOwnerPasswordCredentialsTokenGranterTest extends TokenGranterTest 
                 "random_state"
         );
         ar.getAttributes().put(USERNAME_ATTRIBUTE, "rexijie");
-        ar.getAttributes().put(PASSWORD_ATTRIBUTE, password);
+        ar.getAttributes().put(PASSWORD_ATTRIBUTE, "password");
 
-        var clientAuth = createClientAuthentication(ModelMocks.getDefaultClient(encoder.encode("secret")));
-
-        Mono<OAuth2Token> oAuth2TokenMono = tokenGranter.grantToken(clientAuth, ar);
-
-        StepVerifier.create(oAuth2TokenMono)
-                .consumeNextWith(auth2Token -> {
-                    assertThat(auth2Token).isNotNull();
-                    verify(tokenEnhancer, times(1))
-                            .enhance(any(OAuth2AccessToken.class), any(Authentication.class));
-                }).verifyComplete();
+        return ar;
     }
 }

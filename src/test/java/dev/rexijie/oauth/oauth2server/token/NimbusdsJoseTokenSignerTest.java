@@ -4,6 +4,7 @@ import com.nimbusds.jose.PlainHeader;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import dev.rexijie.oauth.oauth2server.generators.KeyGen;
+import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import dev.rexijie.oauth.oauth2server.mocks.ServiceMocks;
 import dev.rexijie.oauth.oauth2server.security.keys.InMemoryRSAKeyPairStore;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
@@ -33,6 +34,8 @@ class NimbusdsJoseTokenSignerTest {
                         .build(),
                 new JWTClaimsSet.Builder()
                         .subject("rexijie")
+                        .issuer(ServiceMocks.ConfigBeans.mockProperties().openId().issuer())
+                        .audience(ModelMocks.testClient().clientId())
                         .issueTime(Date.from(Instant.now()))
                         .expirationTime(java.sql.Date.from(Instant.now().plus(10, ChronoUnit.SECONDS)))
                         .build()
@@ -67,7 +70,7 @@ class NimbusdsJoseTokenSignerTest {
 
 
     @Test
-    void whenVerifyTokensWithBadKeys_thenFalse() {
+    void whenVerifyTokensWithBadKeys_thenError() {
         var token = getToken();
         Mono<Boolean> verify = signer.sign(token)
                 .flatMap(s -> {

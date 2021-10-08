@@ -13,4 +13,12 @@ public class TestUtils {
             return Mono.just(answer);
         };
     }
+    public static Answer<?> returnsMonoAtArg(int position) {
+        return invocation -> {
+            ReturnsArgumentAt returnsArgumentAt = new ReturnsArgumentAt(position);
+//            returnsArgumentAt.validateFor(invocation);
+            Object answer = returnsArgumentAt.answer(invocation);
+            return Mono.just(answer);
+        };
+    }
 }

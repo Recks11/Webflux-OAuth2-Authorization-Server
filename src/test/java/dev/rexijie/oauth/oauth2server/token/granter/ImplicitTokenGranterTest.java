@@ -1,6 +1,8 @@
 package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
@@ -12,11 +14,10 @@ import reactor.test.StepVerifier;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.PASSWORD_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.Authentication.createClientAuthentication;
+import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 class ImplicitTokenGranterTest extends TokenGranterTest {
 
@@ -24,23 +25,9 @@ class ImplicitTokenGranterTest extends TokenGranterTest {
 
     @Test
     void grantToken() {
-        String password = "password";
-
-        AuthorizationRequest ar = new AuthorizationRequest(
-                "implicit",
-                "token",
-                "test-client",
-                "http://localhost:8080/oauth/code",
-                "read write",
-                "nonce",
-                "random_state"
-        );
-        ar.getAttributes().put(USERNAME_ATTRIBUTE, "rexijie");
-        ar.getAttributes().put(PASSWORD_ATTRIBUTE, password);
-
-        var clientAuth = createClientAuthentication(ModelMocks.getDefaultClient(encoder.encode("secret")));
-
-        Mono<OAuth2Token> oAuth2TokenMono = tokenGranter.grantToken(clientAuth, ar);
+        Mono<OAuth2Token> oAuth2TokenMono = tokenGranter.grantToken(
+                clientAuthentication(),
+                authorizationRequest());
 
         StepVerifier.create(oAuth2TokenMono)
                 .consumeNextWith(auth2Token -> {
@@ -51,10 +38,30 @@ class ImplicitTokenGranterTest extends TokenGranterTest {
     }
 
     @Override
-    void setUp() {
+    protected void setUp() {
         tokenGranter = new ImplicitTokenGranter(
                 tokenServices,
                 reactiveClientAuthenticationManager
         );
+
+//        when(tokenEnhancer.enhance(any(), any(Authentication.class)))
+//                .then(returnsMonoAtArg());
+    }
+
+    @Override
+    protected AuthorizationRequest authorizationRequest() {
+        var ar = new AuthorizationRequest(
+                "implicit",
+                "token",
+                "test-client",
+                "http://localhost:8080/oauth/code",
+                "read write",
+                "nonce",
+                "random_state"
+        );
+        ar.getAttributes().put(USERNAME_ATTRIBUTE, "rexijie");
+        ar.getAttributes().put(PASSWORD_ATTRIBUTE, "password");
+
+        return ar;
     }
 }
