@@ -1,10 +1,12 @@
 package dev.rexijie.oauth.oauth2server.api.handlers;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
+import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.services.ReactiveAuthorizationCodeServices;
-import dev.rexijie.oauth.oauth2server.token.OAuth2ApprovalAuthorizationToken;
+import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.stereotype.Component;
@@ -25,12 +28,15 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.PASSWORD_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.util.UriUtils.modifyUri;
-import static org.springframework.security.oauth2.core.OAuth2ErrorCodes.INSUFFICIENT_SCOPE;
+import static org.springframework.security.oauth2.core.OAuth2ErrorCodes.*;
 
 
 // Algorithm:
@@ -43,6 +49,7 @@ import static org.springframework.security.oauth2.core.OAuth2ErrorCodes.INSUFFIC
 public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizationEndpointHandler.class);
     private static final String AUTHORIZATION_SESSION_AUTH_ATTRIBUTE = "dev.rexijie.oauth.SessionAuth";
+    private static final String SCOPE_PREFIX = "scope:";
 
     @Value("classpath:/templates/index.html")
     private Resource index;
@@ -55,19 +62,37 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
         this.authenticationManager = authenticationManager;
     }
 
+    private AuthorizationRequest validateAuthorizationRequest(Principal principal,
+                                                              AuthorizationRequest request) {
+        if (principal instanceof OAuth2Authentication clientAuthentication && clientAuthentication.getDetails() instanceof ClientDTO clientDto) {
+            if (!clientDto.getRedirectUris().contains(request.getRedirectUri()))
+                throw Exceptions.propagate(new OAuthError(OAuthError.OAuthErrors.INVALID_REQUEST,
+                        "invalid client redirect uri"));
+
+            return request;
+        }
+
+        throw Exceptions.propagate(new OAuth2AuthenticationException(
+                new OAuth2Error(UNAUTHORIZED_CLIENT), "Client is not authorized"
+        ));
+    }
+
 
     // path GET /oauth/authorize
     public Mono<ServerResponse> initiateAuthorization(ServerRequest serverRequest) {
         if (serverRequest.queryParams().isEmpty()) return ServerResponse.badRequest().build();
 
         return extractAuthorizationFromParams(serverRequest)
-                .zipWith(serverRequest.session(), (request, session) -> {
-                    if (!session.isStarted()) session.start();
-                    LOG.info("started session: {}", session.getId());
-                    session.getAttributes().put(
-                            AuthorizationRequest.AUTHORIZATION_SESSION_ATTRIBUTE, request);
-                    return request;
-                }).flatMap(request -> redirectTo(serverRequest, "/login"))
+                .zipWith(serverRequest.principal(),
+                        (authorizationRequest, principal) -> validateAuthorizationRequest(principal, authorizationRequest))
+                .flatMap(authorizationRequest -> serverRequest.session()
+                        .flatMap(session -> {
+                            if (!session.isStarted()) session.start();
+                            LOG.info("started session: {}", session.getId());
+                            session.getAttributes().put(
+                                    AuthorizationRequest.AUTHORIZATION_SESSION_ATTRIBUTE, authorizationRequest);
+                            return redirectTo(serverRequest, "/login");
+                        }))
                 .doOnError(throwable -> {
                     serverRequest.session().flatMap(WebSession::invalidate).subscribe();
                     LOG.error("error initialising authorization");
@@ -78,16 +103,17 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
     public Mono<ServerResponse> authorizeRequest(ServerRequest request) {
         return request.session()
                 .zipWith(extractAuthorizationFromBody(request), (session, authorizationRequest) -> {
-                    Object storedRequest = session.getAttribute(AuthorizationRequest.AUTHORIZATION_SESSION_ATTRIBUTE);
+                    AuthorizationRequest storedRequest = session.getAttribute(AuthorizationRequest.AUTHORIZATION_SESSION_ATTRIBUTE);
                     if (storedRequest == null) {
                         session.invalidate().subscribe();
                         LOG.error("invalidating session with id {}", session.getId());
                         throw new OAuthError(null, "invalid_request", "Session not started"); // TODO (Make better error)
                     }
 
-                    AuthorizationRequest authReq = (AuthorizationRequest) storedRequest;
-                    authReq.getAttributes().putAll(authorizationRequest.getAttributes()); // add credentials to stored request
-                    return authReq;
+//                    storedRequest.getAttributes().putAll(authorizationRequest.getAttributes()); // add credentials to stored request
+                    storedRequest.setAttribute(USERNAME_ATTRIBUTE, authorizationRequest.getAttribute(USERNAME_ATTRIBUTE));
+                    storedRequest.setAttribute(PASSWORD_ATTRIBUTE, authorizationRequest.getAttribute(PASSWORD_ATTRIBUTE));
+                    return storedRequest;
                 })
                 .flatMap(authorizationRequest -> authorize(authorizationRequest, request))
                 .onErrorResume(err -> {
@@ -104,6 +130,13 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
 
         return request.session()
                 .flatMap(session -> authenticateRequest(authorizationRequest)
+                        .zipWith(request.principal(), (userAuthentication, principal) -> {
+                            var auth = (OAuth2Authentication) principal;
+                            auth.setAuthorizationRequest(new OAuth2AuthorizationRequest(
+                                    authorizationRequest, userAuthentication));
+                            auth.setAuthenticationStage(AuthenticationStage.PENDING_APPROVAL);
+                            return auth;
+                        })
                         .flatMap(authentication -> {
                             session.getAttributes().put(AUTHORIZATION_SESSION_AUTH_ATTRIBUTE, authentication);
                             return session.changeSessionId()
@@ -114,17 +147,13 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
 
     private Mono<Authentication> authenticateRequest(AuthorizationRequest authorizationRequest) {
         return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                authorizationRequest.getAttributes().remove(USERNAME_ATTRIBUTE),
-                authorizationRequest.getAttributes().remove(PASSWORD_ATTRIBUTE)
-        )).map(authentication -> {
-            var tk = new OAuth2ApprovalAuthorizationToken(
-                    authentication.getPrincipal(),
-                    authentication.getCredentials(),
-                    authorizationRequest);
-            tk.setAuthenticated(authentication.isAuthenticated());
-            tk.setDetails(authentication.getDetails());
-            return tk;
-        });
+                        authorizationRequest.getAttributes().remove(USERNAME_ATTRIBUTE),
+                        authorizationRequest.getAttributes().remove(PASSWORD_ATTRIBUTE)
+                )).cast(OAuth2Authentication.class)
+                .map(oAuth2Authentication -> {
+                    oAuth2Authentication.setAuthenticationStage(AuthenticationStage.COMPLETE);
+                    return oAuth2Authentication;
+                });
     }
 
     /**
@@ -135,46 +164,77 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
         return request.session()
                 .zipWith(request.formData().map(MultiValueMap::toSingleValueMap),
                         (session, approvalMap) -> {
-                            OAuth2ApprovalAuthorizationToken approvalToken = session.getRequiredAttribute(AUTHORIZATION_SESSION_AUTH_ATTRIBUTE);
+                            OAuth2Authentication userAuth = session.getRequiredAttribute(AUTHORIZATION_SESSION_AUTH_ATTRIBUTE);
+                            var storedRequest = userAuth.getAuthorizationRequest().storedRequest();
                             for (String scope : approvalMap.keySet()) {
                                 boolean state = Boolean.parseBoolean(approvalMap.get(scope));
-                                if (state) approvalToken.approve(scope);
+                                storedRequest.setAttribute("%s%s".formatted(SCOPE_PREFIX, scope), state);
                             }
-                            return approvalToken;
+                            return userAuth;
                         })
                 .map(this::checkApproval)
                 .doOnError(throwable -> {
                     request.session().doOnNext(WebSession::invalidate).subscribe();
                     throw Exceptions.propagate(new OAuthError(throwable, 400, "unauthorized_client",
-                            "The user is not authorised to give approval"));
+                            throwable.getMessage()));
                 })
-                .flatMap(oAuth2ApprovalAuthorizationToken -> authorizationCodeServices.createAuthorizationCode(oAuth2ApprovalAuthorizationToken)
+                .flatMap(fullAuthentication -> authorizationCodeServices.createAuthorizationCode(fullAuthentication)
                         .doOnNext(token -> LOG.info("generated token {}", token.toString()))
-                        .flatMap(t -> request.session().flatMap(se -> se.invalidate().thenReturn(t))) // invalidate session
-                        .flatMap(token -> {
-                            var clientDetails = (ClientDTO) token.getDetails(); // get cient details
-                            var redirectUri = token.getAuthorizationRequest().getRedirectUri(); // get redirect uris
-
-                            // validate redirect uri
-                            if (!clientDetails.getRedirectUris().contains(redirectUri))
-                                return Mono.error(new OAuthError(OAuthError.OAuthErrors.INVALID_REQUEST,
-                                        "invalid client redirect uri"));
-
+                        .flatMap(authorizationCode -> request.session().flatMap(session -> {
+                            String redirectUri = fullAuthentication.getStoredRequest().getRedirectUri();
                             URI codeUri = modifyUri(redirectUri)
-                                    .queryParam("code", token.getApprovalTokenId())
-                                    .queryParamIfPresent("state", Optional.of(token.getAuthorizationRequest().getState()))
+                                    .queryParam("code", authorizationCode.getCode())
+                                    .queryParamIfPresent("state", Optional.of(fullAuthentication.getStoredRequest().getState()))
                                     .build();
 
-                            return ServerResponse
-                                    .temporaryRedirect(codeUri)
-                                    .build();
-                        }));
+                            return session.invalidate()
+                                    .then(ServerResponse
+                                            .temporaryRedirect(codeUri)
+                                            .build());
+                        })));
 
     }
 
-    private OAuth2ApprovalAuthorizationToken checkApproval(OAuth2ApprovalAuthorizationToken token) {
-        if (!token.isAllApproved()) throw new OAuth2AuthorizationException(new OAuth2Error(INSUFFICIENT_SCOPE));
-        return token;
+    private String extractInvalidScopes(Set<String> original, Set<String> supplied) {
+
+        return supplied.stream()
+                .filter(s -> !original.contains(s))
+                .reduce("", (s, s2) -> s.concat(" %s".formatted(s2)))
+                .trim();
+    }
+
+    private OAuth2Authentication checkApproval(OAuth2Authentication authentication) {
+        AuthorizationRequest storedRequest = authentication.getStoredRequest();
+        Set<String> scopes = storedRequest.getScopes();
+        Set<String> requestAttributeKeySet = storedRequest.getAttributes().keySet();
+        var scopesGranted = requestAttributeKeySet
+                .stream().filter(key -> key.startsWith(SCOPE_PREFIX))
+                .map(s -> s.replace(SCOPE_PREFIX, ""))
+                .collect(Collectors.toSet());
+
+        if (authentication.getDetails() instanceof ClientDTO dto) {
+            if (!dto.getScopes().containsAll(scopes)) {
+                throw new OAuth2AuthorizationException(
+                        new OAuth2Error(INVALID_SCOPE),
+                        "some requested scopes are invalid [%s]".formatted(extractInvalidScopes(dto.getScopes(), scopes)));
+            }
+        }
+
+        if (!scopes.containsAll(scopesGranted)) throw new OAuth2AuthorizationException(
+                new OAuth2Error(INVALID_SCOPE),
+                "some requested scopes are invalid [%s]".formatted(extractInvalidScopes(scopes, scopesGranted)));
+
+        Optional<Boolean> reduce = requestAttributeKeySet
+                .stream().filter(key -> key.startsWith(SCOPE_PREFIX))
+                .map(key -> Boolean.parseBoolean(storedRequest.getAttribute(key)))
+                .reduce((s, s2) -> s && s2);
+
+        if (reduce.isEmpty()) throw new OAuth2AuthorizationException(new OAuth2Error(INSUFFICIENT_SCOPE),
+                "No Scopes were approved");
+
+        if (!reduce.get()) throw new OAuth2AuthorizationException(new OAuth2Error(INSUFFICIENT_SCOPE),
+                "Some Scopes were Rejected therefore, the token was discarded all together");
+        return authentication;
     }
 
     public Mono<ServerResponse> approvalPage(ServerRequest request) {

@@ -63,15 +63,15 @@ public class AuthorizationRequest {
                 paramsMap.remove("redirect_uri"),
                 paramsMap.remove("scopes"),
                 paramsMap.remove("nonce"),
-                paramsMap.remove("state")
+                paramsMap.remove("state"),
+                paramsMap.remove("prompt"),
+                paramsMap.remove("include_granted_scopes"),
+                paramsMap.remove("response_mode"),
+                paramsMap.remove("code_challenge"),
+                paramsMap.remove("code_challenge_method"),
+                new LinkedHashMap<>()
         );
-        request.attributes = new LinkedHashMap<>();
         request.attributes.putAll(paramsMap);
-        request.setPrompt(paramsMap.remove("prompt"));
-        request.setIncludeGrantedScopes(paramsMap.remove("include_granted_scopes"));
-        request.setResponseMode(paramsMap.remove("response_mode"));
-        request.setCodeChallenge(paramsMap.remove("code_challenge"));
-        request.setCodeChallengeMethod(paramsMap.remove("code_challenge_method"));
         return request;
     }
 
@@ -79,16 +79,8 @@ public class AuthorizationRequest {
         return grantType;
     }
 
-    public void setGrantType(String grantType) {
-        this.grantType = grantType;
-    }
-
     public String getResponseType() {
         return responseType;
-    }
-
-    public void setResponseType(String responseType) {
-        this.responseType = responseType;
     }
 
     public String getClientId() {
@@ -103,32 +95,20 @@ public class AuthorizationRequest {
         return redirectUri;
     }
 
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
-    }
-
     public Set<String> getScopes() {
         return scopes;
     }
 
-    public void setScope(String scopes) {
-        this.scopes = new HashSet<>(Arrays.asList(scopes.split(" ")));
-    }
+//    public void setScope(String scopes) {
+//        this.scopes = new HashSet<>(Arrays.asList(scopes.split(" ")));
+//    }
 
     public String getNonce() {
         return nonce;
     }
 
-    public void setNonce(String nonce) {
-        this.nonce = nonce;
-    }
-
     public String getState() {
         return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
     }
 
     public void setScopes(Set<String> scopes) {
@@ -139,40 +119,20 @@ public class AuthorizationRequest {
         return prompt;
     }
 
-    public void setPrompt(String prompt) {
-        this.prompt = prompt;
-    }
-
     public String getIncludeGrantedScopes() {
         return includeGrantedScopes;
-    }
-
-    public void setIncludeGrantedScopes(String includeGrantedScopes) {
-        this.includeGrantedScopes = includeGrantedScopes;
     }
 
     public String getResponseMode() {
         return responseMode;
     }
 
-    public void setResponseMode(String responseMode) {
-        this.responseMode = responseMode;
-    }
-
     public String getCodeChallenge() {
         return codeChallenge;
     }
 
-    public void setCodeChallenge(String codeChallenge) {
-        this.codeChallenge = codeChallenge;
-    }
-
     public String getCodeChallengeMethod() {
         return codeChallengeMethod;
-    }
-
-    public void setCodeChallengeMethod(String codeChallengeMethod) {
-        this.codeChallengeMethod = codeChallengeMethod;
     }
 
     public Map<String, Object> getAttributes() {
@@ -184,8 +144,8 @@ public class AuthorizationRequest {
         return attributes.get(name).toString();
     }
 
-    public void setAttributes(Map<String, Object> attributes) {
-        this.attributes = attributes;
+    public void setAttribute(String key, Object value) {
+        this.attributes.put(key, value);
     }
 
     @Override

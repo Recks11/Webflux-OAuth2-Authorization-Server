@@ -2,11 +2,9 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
-import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.services.ReactiveAuthorizationCodeServices;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
-import dev.rexijie.oauth.oauth2server.token.OAuth2ApprovalAuthorizationToken;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -38,14 +36,8 @@ public class AuthorizationCodeTokenGranter extends AbstractOAuth2TokenGranter {
                 .flatMap(request -> {
                     String code = request.getAttribute("code");
 
-                    return authorizationCodeServices.consumeAuthorizationCode(code)
-                            .flatMap(approvalToken -> {
-                                var userAuth = new OAuth2Authentication(approvalToken.getPrincipal(), null);
-                                userAuth.setAuthenticationStage(AuthenticationStage.COMPLETE);
-                                    var auth = createAuthenticationToken(approvalToken,
-                                            new OAuth2AuthorizationRequest(
-                                                    approvalToken.getAuthorizationRequest(), userAuth));
-//
+                    return authorizationCodeServices.consumeAuthorizationCode(code, authentication)
+                            .flatMap(auth -> {
                                 return getTokenServices().createAccessToken(auth);
                             });
                 });
@@ -53,13 +45,6 @@ public class AuthorizationCodeTokenGranter extends AbstractOAuth2TokenGranter {
 
     @Override
     protected OAuth2Authentication createAuthenticationToken(Authentication authentication, OAuth2AuthorizationRequest authorizationRequest) {
-        var auth = (OAuth2ApprovalAuthorizationToken) authentication;
-        OAuth2Authentication oAuth2Authentication = new OAuth2Authentication(auth.getAuthorizedClientId(),
-                null,
-                null,
-                authorizationRequest);
-        oAuth2Authentication.setAuthenticated(authentication.isAuthenticated());
-        oAuth2Authentication.setDetails(authentication.getDetails());
-        return oAuth2Authentication;
+        return OAuth2Authentication.from(authentication);
     }
 }

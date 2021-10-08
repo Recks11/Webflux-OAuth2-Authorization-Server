@@ -7,8 +7,10 @@ import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @Component
-public interface TokenServices {
+public interface TokenServices extends TokenAuthenticationConverter {
     Mono<OAuth2Token> createAccessToken(Authentication authentication);
     Mono<OAuth2Token> refreshAccessToken(RefreshToken token, RefreshTokenRequest request);
     Mono<OAuth2Token> getAccessToken(Authentication authentication);
