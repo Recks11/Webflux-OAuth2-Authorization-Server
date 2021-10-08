@@ -39,6 +39,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
+import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.Cookies.SESSION_COOKIE_NAME;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.PASSWORD_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
@@ -49,6 +50,7 @@ import static org.mockito.Mockito.when;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AuthorizationCodeFlowTests extends OAuthTest {
     private static final Map<String, ResponseCookie> responseCookieState = new HashMap<>();
+    private static final String SESSION_ID = SESSION_COOKIE_NAME;
     @Autowired
     Signer signer;
     @Autowired
@@ -77,12 +79,12 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .exchange()
                 .expectStatus().isTemporaryRedirect()
                 .expectHeader().location(getUriBuilder().replacePath(LOGIN_ENDPOINT).build().toString())
-                .expectCookie().exists("SESSION")
+                .expectCookie().exists(SESSION_ID)
                 .returnResult(Object.class);
 
-        ResponseCookie session = initialResponse.getResponseCookies().getFirst("SESSION");
+        ResponseCookie session = initialResponse.getResponseCookies().getFirst(SESSION_ID);
 
-        responseCookieState.put("COOKIE", session);
+        responseCookieState.put(SESSION_ID, session);
     }
 
     @Test
@@ -90,7 +92,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
     void when_login_expect_redirect_to_approval() {
 
         URI authorizationUri = getUriBuilder().build();
-        var session = responseCookieState.get("COOKIE");
+        var session = responseCookieState.get(SESSION_ID);
         // provide credentials
         FluxExchangeResult<Object> loginResult = authClient()
                 .post()
@@ -103,17 +105,17 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .exchange()
                 .expectStatus().isTemporaryRedirect()
                 .expectHeader().location(getUriBuilder().replacePath(APPROVAL_ENDPOINT).build().toString())
-                .expectCookie().exists("SESSION")
+                .expectCookie().exists(SESSION_ID)
                 .returnResult(Object.class);
 
-        ResponseCookie newSession = loginResult.getResponseCookies().getFirst("SESSION");
-        responseCookieState.replace("COOKIE", newSession);
+        ResponseCookie newSession = loginResult.getResponseCookies().getFirst(SESSION_ID);
+        responseCookieState.replace(SESSION_ID, newSession);
     }
 
     @Test
     @Order(3)
     void when_approval_then_redirect_to_redirect_uri() {
-        var session = responseCookieState.get("COOKIE");
+        var session = responseCookieState.get(SESSION_ID);
         // approve or deny scopes
         String clientUrlPattern = ModelMocks.testClient().registeredRedirectUris().toArray()[0].toString() + "(.)+";
         FluxExchangeResult<Object> approveDenyScopes = authClient()
@@ -127,8 +129,8 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .expectHeader().valuesMatch("Location", clientUrlPattern)
                 .returnResult(Object.class);
 
-        ResponseCookie scopesSession = approveDenyScopes.getResponseCookies().getFirst("SESSION");
-        responseCookieState.replace("COOKIE", scopesSession);
+        ResponseCookie scopesSession = approveDenyScopes.getResponseCookies().getFirst(SESSION_ID);
+        responseCookieState.replace(SESSION_ID, scopesSession);
     }
 
     @Test
