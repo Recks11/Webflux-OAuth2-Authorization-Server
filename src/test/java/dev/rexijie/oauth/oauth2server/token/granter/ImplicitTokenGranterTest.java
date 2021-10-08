@@ -44,8 +44,14 @@ class ImplicitTokenGranterTest extends TokenGranterTest {
                 reactiveClientAuthenticationManager
         );
 
-//        when(tokenEnhancer.enhance(any(), any(Authentication.class)))
-//                .then(returnsMonoAtArg());
+        when(clientRepository.findByClientId(testClient().clientId()))
+                .thenReturn(Mono.just(testClient()));
+
+        when(userRepository.findByUsername(testUser().getUsername()))
+                .thenReturn(Mono.just(testUser()));
+
+        when(tokenEnhancer.enhance(any(), any(Authentication.class)))
+                .then(returnsMonoAtArg());
     }
 
     @Override

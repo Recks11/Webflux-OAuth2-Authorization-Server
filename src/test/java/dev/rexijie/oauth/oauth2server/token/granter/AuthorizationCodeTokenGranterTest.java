@@ -37,6 +37,7 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
 
         when(tokenEnhancer.enhance(any(), any(Authentication.class)))
                 .then(returnsMonoAtArg());
+
         String code = clientAuthentication().getStoredRequest().getAttribute("code");
         when(authorizationCodeServices.consumeAuthorizationCode(eq(code), any()))
                 .then(returnsMonoAtArg(1));

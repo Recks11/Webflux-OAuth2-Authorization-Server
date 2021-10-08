@@ -44,8 +44,11 @@ class ClientCredentialsTokenGranterTest extends TokenGranterTest {
                 reactiveClientAuthenticationManager
         );
 
-//        when(clientRepository.findByClientId(testClient().clientId()))
-//                .thenReturn(Mono.just(testClient()));
+        when(clientRepository.findByClientId(eq(testClient().clientId())))
+                .thenReturn(Mono.just(testClient()));
+
+        when(userRepository.findByUsername(any()))
+                .thenReturn(Mono.empty());
 
 //        when(tokenEnhancer.enhance(any(), any(Authentication.class)))
 //                .then(returnsMonoAtArg());
