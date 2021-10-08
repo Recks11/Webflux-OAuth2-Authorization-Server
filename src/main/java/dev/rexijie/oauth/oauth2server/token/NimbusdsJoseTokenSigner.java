@@ -30,6 +30,8 @@ import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 
+import static dev.rexijie.oauth.oauth2server.util.JoseUtils.assertInstance;
+
 public class NimbusdsJoseTokenSigner implements Signer {
 
     private final KeyPairStore<RSAPrivateKey, RSAPublicKey> keyPairStore;
@@ -62,19 +64,32 @@ public class NimbusdsJoseTokenSigner implements Signer {
     }
 
     @Override
-    public Mono<SignedJWT> deserialize(String serializedJwt) {
+    public Mono<String> sigh(String token) {
+        return deserialize(token)
+                .map(jwt -> assertInstance(jwt, PlainJWT.class))
+                .flatMap(this::sign);
+    }
+
+    @Override
+    public Mono<JWT> deserialize(String serializedJwt) {
         return Mono.create(monoSink -> {
             try {
                 SignedJWT parsedToken = SignedJWT.parse(serializedJwt);
                 monoSink.success(parsedToken);
             } catch (ParseException exception) {
-                monoSink.error(new JwtException("invalid token", exception));
+                try {
+                    PlainJWT parse = PlainJWT.parse(serializedJwt);
+                    monoSink.success(parse);
+                } catch (ParseException exception1) {
+                    monoSink.error(new JwtException("invalid token", exception));
+                }
             }
         });
     }
 
     public Mono<Boolean> verify(String token) {
         return deserialize(token)
+                .map(jwt -> assertInstance(jwt, SignedJWT.class))
                 .flatMap(signedJWT -> Mono.create(monoSink -> {
                     try {
                         var key = keyPairStore.getKeyPair(signedJWT.getHeader().getKeyID());

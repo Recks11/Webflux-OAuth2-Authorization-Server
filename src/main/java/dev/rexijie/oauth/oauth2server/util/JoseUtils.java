@@ -6,6 +6,8 @@ import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.jwt.JwtException;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.text.ParseException;
@@ -41,5 +43,10 @@ public class JoseUtils {
                 jwtClaimsSetMonoSink.error(exception);
             }
         });
+    }
+
+    public static  <T extends JWT> T assertInstance(JWT token, Class<T> type) {
+        if (type.isAssignableFrom(token.getClass())) return type.cast(token);
+        throw Exceptions.propagate(new JwtException("invalid token type"));
     }
 }

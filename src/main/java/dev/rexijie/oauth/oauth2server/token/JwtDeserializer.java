@@ -1,8 +1,8 @@
 package dev.rexijie.oauth.oauth2server.token;
 
-import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jwt.JWT;
 import reactor.core.publisher.Mono;
 
 public interface JwtDeserializer {
-     Mono<SignedJWT> deserialize(String serializedJwt);
+     Mono<JWT> deserialize(String serializedJwt);
 }
