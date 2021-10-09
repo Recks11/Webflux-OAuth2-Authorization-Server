@@ -218,7 +218,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <excludes>
-                                <exclude>**/MongoTest.java</exclude>
+                                <exclude>**/enhancer/JwtGeneratingTokenEnhancerTest.java</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
