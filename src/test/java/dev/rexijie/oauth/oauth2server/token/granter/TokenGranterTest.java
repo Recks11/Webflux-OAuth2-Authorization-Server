@@ -67,14 +67,14 @@ public abstract class TokenGranterTest {
     protected PasswordEncoder encoder;
     protected ReactiveUserAuthenticationManager reactiveUserAuthenticationManager;
     protected ReactiveClientAuthenticationManager reactiveClientAuthenticationManager;
-    protected SecretGenerator secretGenerator = new RandomStringSecretGenerator();
+    protected SecretGenerator secretGenerator;
 
     @BeforeEach
     void initializeClient() {
         objectMapper = ServiceMocks.ConfigBeans.testObjectMapper();
         encoder = ServiceMocks.ConfigBeans.testPasswordEncoder();
         tokenService = ServiceMocks.ConfigBeans.testTokenService();
-
+        secretGenerator = new RandomStringSecretGenerator();
         clientService = new DefaultClientService(
                 clientRepository, ServiceMocks.ConfigBeans.credentialsGenerator(),  encoder);
 

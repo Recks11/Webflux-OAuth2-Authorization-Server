@@ -8,15 +8,17 @@ import dev.rexijie.oauth.oauth2server.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebFlux;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
@@ -34,16 +36,25 @@ import static org.mockito.Mockito.when;
 // TODO (convert to integration test)
 @SpringBootTest
 @AutoConfigureWebTestClient
+@EnableAutoConfiguration(exclude = {
+        MongoReactiveAutoConfiguration.class,
+        MongoReactiveDataAutoConfiguration.class,
+        MongoReactiveRepositoriesAutoConfiguration.class
+})
 @ActiveProfiles("test")
 public abstract class OAuthTest {
 
 
-    @Autowired private WebTestClient webTestClient;
-    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired
+    private WebTestClient webTestClient;
+    private PasswordEncoder passwordEncoder;
 
-    @MockBean protected UserRepository userRepository;
-    @MockBean protected ClientRepository clientRepository;
-    @MockBean protected AuthorizationCodeRepository codeRepository;
+    @MockBean
+    protected UserRepository userRepository;
+    @MockBean
+    protected ClientRepository clientRepository;
+    @MockBean
+    protected AuthorizationCodeRepository codeRepository;
 
     protected static String APPROVAL_ENDPOINT = "/oauth/approve";
     protected static String AUTHORIZATION_ENDPOINT = "/oauth/authorize";
@@ -52,6 +63,7 @@ public abstract class OAuthTest {
 
     @BeforeEach
     void initializeClient() {
+        passwordEncoder = new BCryptPasswordEncoder();
         var client = testClient();
         var user = testUser();
         when(clientRepository.findByClientId(client.clientId()))
