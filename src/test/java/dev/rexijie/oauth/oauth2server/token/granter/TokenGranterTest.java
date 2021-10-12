@@ -18,6 +18,7 @@ import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import dev.rexijie.oauth.oauth2server.mocks.ServiceMocks;
 import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.model.User;
+import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.repository.AuthorizationCodeRepository;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
@@ -49,6 +50,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
+import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.CLIENT_AUTHENTICATION_METHOD;
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.Authentication.createClientAuthentication;
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultClient;
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultUser;
@@ -130,6 +132,9 @@ public abstract class TokenGranterTest {
                 authorizationRequest(),
                 ModelMocks.Authentication.mockUserAuthentication(ModelMocks.testUser())
         ));
+
+        clientAuth.getStoredRequest().setAttribute(CLIENT_AUTHENTICATION_METHOD,
+                ((ClientDTO) clientAuth.getDetails()).getTokenEndpointAuthenticationMethod());
         return clientAuth;
     }
 
