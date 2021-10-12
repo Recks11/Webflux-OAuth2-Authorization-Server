@@ -167,9 +167,9 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <excludes>
-                                <exclude>**/OAuth2ServerApplicationTests.java</exclude>
-                            </excludes>
+                           <includes>
+                               <include>*/services/*.java</include>
+                           </includes>
                         </configuration>
                     </plugin>
                 </plugins>

@@ -11,7 +11,7 @@ import dev.rexijie.oauth.oauth2server.security.keys.InMemoryRSAKeyPairStore;
 import dev.rexijie.oauth.oauth2server.token.NimbusdsJoseTokenSigner;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.Signer;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.token.TokenService;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -30,8 +30,8 @@ class JwtGeneratingTokenEnhancerTest {
     private TokenService tokenService;
     private final String jwtPattern = "(^[\\w-]*\\.[\\w-]*\\.[\\w-]*$)";
 
-    @BeforeEach
-    void setUp() {
+    @Before
+    public void setUp() {
         OAuth2Properties properties = ServiceMocks.ConfigBeans.mockProperties();
         tokenService = ServiceMocks.ConfigBeans.testTokenService();
         Signer jwtSigner = new NimbusdsJoseTokenSigner(new InMemoryRSAKeyPairStore(KeyGen.generateRSAKeys())
