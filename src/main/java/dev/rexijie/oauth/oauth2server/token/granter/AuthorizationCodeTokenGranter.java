@@ -10,7 +10,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import reactor.core.publisher.Mono;
 
+import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.CLIENT_AUTHENTICATION_METHOD;
 import static dev.rexijie.oauth.oauth2server.error.OAuthError.OAuthErrors.INVALID_REQUEST;
+import static dev.rexijie.oauth.oauth2server.error.OAuthError.OAuthErrors.UNAUTHORIZED_CLIENT;
 
 public class AuthorizationCodeTokenGranter extends AbstractOAuth2TokenGranter {
 
@@ -26,16 +28,21 @@ public class AuthorizationCodeTokenGranter extends AbstractOAuth2TokenGranter {
     public Mono<Void> validateRequest(AuthorizationRequest request) {
         if (request.getAttribute("code") == null)
             return Mono.error(new OAuthError(INVALID_REQUEST, "missing authorization code"));
+        if (request.getRedirectUri() == null)
+            return Mono.error(new OAuthError(INVALID_REQUEST, "missing redirect_uri"));
+//        if (request.getAttribute(CLIENT_AUTHENTICATION_METHOD) == null)
+//            return Mono.error(new OAuthError(UNAUTHORIZED_CLIENT, "missing client authentication"));
         return Mono.empty();
     }
 
     @Override
+    // TODO (Authenticate client before generating token)
+    // a code has to be bound to a client and user authentication.
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
         return Mono.just(authorizationRequest)
                 .doOnNext(this::validateRequest)
                 .flatMap(request -> {
                     String code = request.getAttribute("code");
-
                     return authorizationCodeServices.consumeAuthorizationCode(code, authentication)
                             .flatMap(auth -> {
                                 return getTokenServices().createAccessToken(auth);
