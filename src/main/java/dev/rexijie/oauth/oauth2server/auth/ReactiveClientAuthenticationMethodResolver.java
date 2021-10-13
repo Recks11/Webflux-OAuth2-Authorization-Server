@@ -1,8 +1,7 @@
 package dev.rexijie.oauth.oauth2server.auth;
 
 
-import dev.rexijie.oauth.oauth2server.model.Client;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
