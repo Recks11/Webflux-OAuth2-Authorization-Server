@@ -7,5 +7,5 @@ import reactor.core.publisher.Mono;
 public interface Signer extends JwtDeserializer, Verifier {
     String SIGNING_KEY_ID = "dev.rexijie.signing.key";
     Mono<String> sign(JWT token);
-    Mono<String> sigh(String token);
+    Mono<String> sign(String token);
 }
