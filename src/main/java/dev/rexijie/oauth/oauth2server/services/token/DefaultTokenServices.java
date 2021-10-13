@@ -1,5 +1,7 @@
 package dev.rexijie.oauth.oauth2server.services.token;
 
+import com.nimbusds.oauth2.sdk.GrantType;
+import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import dev.rexijie.oauth.oauth2server.api.domain.RefreshTokenRequest;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
@@ -20,8 +22,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 
-import static dev.rexijie.oauth.oauth2server.error.OAuthError.INVALID_CLIENT_ERROR;
-import static dev.rexijie.oauth.oauth2server.error.OAuthError.INVALID_SCOPE_ERROR;
+import static com.nimbusds.oauth2.sdk.GrantType.CLIENT_CREDENTIALS;
+import static dev.rexijie.oauth.oauth2server.error.OAuthError.*;
 import static org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType.BEARER;
 
 @Component
@@ -55,25 +57,15 @@ public class DefaultTokenServices implements TokenServices {
         if (authentication instanceof OAuth2Authentication clientAuthentication) {
             var clientId = authentication.getPrincipal().toString();
             var userId = clientAuthentication.getUserPrincipal().toString();
-            return clientService.findClientById(clientId)
-                    .zipWith(userService.findUserByUsername(userId), (clientDTO, userDTO) -> {
-                        clientAuthentication.setDetails(clientDTO);
-                        var userAuthentication = (OAuth2Authentication) clientAuthentication.getUserAuthentication();
-                        userAuthentication.setDetails(userDTO);
-                        if (!clientDTO.getScopes().containsAll(clientAuthentication.getStoredRequest().getScopes()))
-                            throw Exceptions.propagate(INVALID_SCOPE_ERROR);
-                        return clientAuthentication;
-                    }).flatMap(auth -> {
-                        Token token = generateToken(authentication);
-                        var clientData = (ClientDTO) auth.getDetails();
-                        var oauthToken = new OAuth2AccessToken(BEARER,
-                                token.getKey(),
-                                Instant.now(),
-                                Instant.now().plusSeconds(clientData.getAccessTokenValidity()),
-                                clientAuthentication.getStoredRequest().getScopes()); // TODO (modify to get scopes a user can have?)
-                        LOG.debug("crating access token");
-                        return getTokenEnhancer().enhance(oauthToken, authentication);
-                    });
+            var reqGrant = clientAuthentication.getStoredRequest().getGrantType();
+            try {
+                var grantType = GrantType.parse(reqGrant);
+                if (grantType.equals(CLIENT_CREDENTIALS))
+                    return createClientCredentialsToken(clientAuthentication);
+                return createUserToken(clientId, userId, clientAuthentication);
+            } catch (ParseException e) {
+                throw Exceptions.propagate(INVALID_GRANT_ERROR);
+            }
         }
         return Mono.error(INVALID_CLIENT_ERROR);
     }
@@ -103,15 +95,47 @@ public class DefaultTokenServices implements TokenServices {
         return "username=%s".formatted(authentication.getPrincipal());
     }
 
-    protected TokenEnhancer getTokenEnhancer() {
-        return this.tokenEnhancer;
-    }
-
     private Token generateToken(Authentication authentication) {
         var auth2Authentication = (OAuth2Authentication) authentication;
         var authorizationRequest = auth2Authentication.getAuthorizationRequest();
         Authentication userAuthentication = authorizationRequest.userAuthentication();
 
         return tokenService.allocateToken(generateTokenAdditionalInformation(userAuthentication));
+    }
+
+    private Mono<OAuth2Token> createClientCredentialsToken(OAuth2Authentication authentication) {
+        OAuth2AccessToken accessToken = createAccessToken(authentication);
+        return getTokenEnhancer().enhance(accessToken, authentication);
+    }
+
+    private Mono<OAuth2Token> createUserToken(String clientId, String userId, OAuth2Authentication clientAuthentication) {
+        return clientService.findClientById(clientId)
+                .zipWith(userService.findUserByUsername(userId), (clientDTO, userDTO) -> {
+                    clientAuthentication.setDetails(clientDTO);
+                    var userAuthentication = (OAuth2Authentication) clientAuthentication.getUserAuthentication();
+                    userAuthentication.setDetails(userDTO);
+                    if (!clientDTO.getScopes().containsAll(clientAuthentication.getStoredRequest().getScopes()))
+                        throw Exceptions.propagate(INVALID_SCOPE_ERROR);
+                    return clientAuthentication;
+                })
+                .flatMap(auth -> {
+                    var oauthToken = createAccessToken(auth);
+                    return getTokenEnhancer().enhance(oauthToken, auth);
+                });
+    }
+
+    private OAuth2AccessToken createAccessToken(OAuth2Authentication auth) {
+        LOG.debug("crating access token");
+        Token token = generateToken(auth);
+        var clientData = (ClientDTO) auth.getDetails();
+        return new OAuth2AccessToken(BEARER,
+                token.getKey(),
+                Instant.now(),
+                Instant.now().plusSeconds(clientData.getAccessTokenValidity()),
+                auth.getStoredRequest().getScopes()); // TODO (modify to get scopes a user can have?)
+    }
+
+    protected TokenEnhancer getTokenEnhancer() {
+        return this.tokenEnhancer;
     }
 }
