@@ -20,6 +20,7 @@ import dev.rexijie.oauth.oauth2server.util.JoseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.token.Token;
 import org.springframework.security.core.token.TokenService;
 import org.springframework.security.oauth2.core.*;
@@ -33,6 +34,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static dev.rexijie.oauth.oauth2server.api.domain.OAuthVars.GrantTypes.CLIENT_CREDENTIALS;
 import static dev.rexijie.oauth.oauth2server.token.claims.ClaimNames.Custom.*;
@@ -164,7 +166,9 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 .audience(authentication.getPrincipal().toString())
                 .claim(AUTH_TIME, authentication.getAuthenticationTime())
                 .claim(SCOPES, authentication.getStoredRequest().getScope())
-                .claim(AUTHORITIES, authentication.getUserAuthentication().getAuthorities())
+                .claim(AUTHORITIES, authentication.getUserAuthentication()
+                        .getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority).collect(Collectors.toSet()))
                 .issueTime(Date.from(Instant.now()))
                 .expirationTime(secondsFromNow(details.getAccessTokenValidity()))
                 .notBeforeTime(Date.from(Instant.now()))

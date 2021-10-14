@@ -10,6 +10,8 @@ import dev.rexijie.oauth.oauth2server.repository.AuthorizationCodeRepository;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
 import dev.rexijie.oauth.oauth2server.util.TimeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
@@ -24,6 +26,7 @@ import java.util.Set;
 @Component
 @Profile("dev")
 public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
+    private static final Logger LOG = LoggerFactory.getLogger(Bootstrap.class);
     private final ClientRepository clientRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
@@ -39,11 +42,16 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
 
     @Override
     public void onApplicationEvent(ApplicationStartedEvent event) {
+        LOG.info("=================================================");
+        LOG.info("Initializing data");
         userRepository.deleteAll().block();
         clientRepository.deleteAll().block();
-        userRepository.save(defaultUser()).block();
-        clientRepository.save(defaultClient()).block();
+        userRepository.save(defaultUser())
+                .doOnSuccess(user -> LOG.info("Created User {}", user.toString())).block();
+        clientRepository.save(defaultClient())
+                .doOnSuccess(client -> LOG.info("Created Client {}", client.toString())).block();
         authorizationCodeServices.deleteAll().block();
+        LOG.info("=================================================");
     }
 
     private Client defaultClient() {
