@@ -18,8 +18,6 @@ jobs:
           cache: maven
       - name: Run tests
         run: mvn clean test -Dspring.profiles.active=test
-      - name: Verify
-        run: mvn clean verify -DskipTests
 
 
 
