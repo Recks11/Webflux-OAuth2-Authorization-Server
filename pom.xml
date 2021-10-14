@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>dev.rexijie.oauth</groupId>
-    <artifactId>OAuth2-Server</artifactId>
+    <artifactId>oauth2-server</artifactId>
     <version>0.0.1</version>
     <name>OAuth2-Server</name>
     <description>Authentication Server that supports OpenID Connect</description>

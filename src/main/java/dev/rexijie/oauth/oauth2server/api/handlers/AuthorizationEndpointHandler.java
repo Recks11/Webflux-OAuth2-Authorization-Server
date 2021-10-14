@@ -45,6 +45,7 @@ import static org.springframework.security.oauth2.core.OAuth2ErrorCodes.*;
 // 3. receive credentials and authenticate
 // 4. on login, redirect to approve page
 // 5. after approve, redirect to response with credentials
+// TODO - Validate Referrer on ALL REDIRECTS
 @Component
 public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizationEndpointHandler.class);
