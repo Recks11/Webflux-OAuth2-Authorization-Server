@@ -12,3 +12,5 @@ spring:
     mongodb:
       uri: mongodb+srv://${MONGO_USERNAME}:${MONGO_PASSWORD}@oauth2-cluster.gvdxn.mongodb.net/authserver?retryWrites=true&w=majority
       auto-index-creation: true
+server:
+  port: 8000
