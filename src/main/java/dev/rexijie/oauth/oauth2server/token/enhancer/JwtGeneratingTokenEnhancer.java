@@ -1,6 +1,6 @@
 package dev.rexijie.oauth.oauth2server.token.enhancer;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.PlainHeader;
 import com.nimbusds.jose.util.JSONObjectUtils;
@@ -12,6 +12,7 @@ import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.generators.RandomStringSecretGenerator;
 import dev.rexijie.oauth.oauth2server.generators.SecretGenerator;
+import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.Signer;
@@ -29,11 +30,15 @@ import reactor.core.publisher.Mono;
 import java.sql.Date;
 import java.text.ParseException;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static dev.rexijie.oauth.oauth2server.api.domain.OAuthVars.GrantTypes.CLIENT_CREDENTIALS;
+import static dev.rexijie.oauth.oauth2server.token.claims.ClaimNames.Custom.*;
+import static dev.rexijie.oauth.oauth2server.util.SerializationUtils.TypeReferences.mapTypeReference;
+import static dev.rexijie.oauth.oauth2server.util.TimeUtils.minutesFromNow;
+import static dev.rexijie.oauth.oauth2server.util.TimeUtils.secondsFromNow;
 import static org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.AUTH_TIME;
 
 /**
@@ -67,6 +72,8 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 };
 
                 return jwtSigner.sign(jwtToken)
+                        .doOnNext(s -> LOG.debug("Signing Token"))
+                        .doOnSuccess(s -> LOG.debug("Successfully Signed Token"))
                         .doOnError(throwable -> {
                             throw Exceptions.propagate(throwable);
                         })
@@ -74,10 +81,12 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                             try {
                                 return createAccessToken(signedJwt, jwtToken.getJWTClaimsSet(), token);
                             } catch (ParseException e) {
+                                LOG.error("Error Signing Token");
                                 throw Exceptions.propagate(e);
                             }
                         });
             } catch (OAuth2AuthenticationException ex) {
+                LOG.error("an Error occured while Enhancing token");
                 return Mono.error(Exceptions.propagate(ex));
             }
         }
@@ -100,7 +109,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                         if (!jwtClaimsSet.getAudience().contains(authentication.getPrincipal().toString()))
                             throw new OAuth2AuthorizationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT),
                                     "This client is unauthorized to use this code");
-                        var auReq = jwtClaimsSet.getJSONObjectClaim("authorizationRequest");
+                        var auReq = jwtClaimsSet.getJSONObjectClaim(AUTHORIZATION_REQUEST);
                         var authReqString = JSONObjectUtils.toJSONString(auReq);
                         var authorizationRequest = getObjectMapper().readValue(authReqString, AuthorizationRequest.class);
 
@@ -110,7 +119,11 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                         ));
                         auth.setAuthenticationStage(AuthenticationStage.COMPLETE);
                         return auth;
-                    } catch (Exception exception) {
+                    } catch (JsonProcessingException exception) {
+                        LOG.error("Error reading Authentication from stored Token");
+                        throw Exceptions.propagate(exception);
+                    } catch (ParseException exception) {
+                        LOG.error("Error retrieving AuthorizationRequest from Jwt Claims");
                         throw Exceptions.propagate(exception);
                     }
                 });
@@ -126,47 +139,82 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
     }
 
     private PlainJWT createToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
-        var tokenInfo = extractAdditionalInformationFromToken(token.getTokenValue());
-        var jti = token.getTokenValue().substring(0, 32);
-        var claimsSet = new JWTClaimsSet.Builder()
-                .jwtID(jti)
-                .issuer(properties.openId().issuer())
-                .subject(tokenInfo.get("username"))
-                .audience(authentication.getPrincipal().toString())
-                .claim(AUTH_TIME, authentication.getAuthenticationTime())
-                .notBeforeTime(Date.from(Instant.now()))
-                .issueTime(Date.from(Instant.now()))
-                .expirationTime(Date.from(Instant.now().plus(360, ChronoUnit.SECONDS)))
-                .build();
+        String grantType = authentication.getStoredRequest().getGrantType();
+        JWTClaimsSet claimsSet = grantType.equals(CLIENT_CREDENTIALS) ?
+                createClientClaimSet(token, authentication) :
+                createUserClaimSet(token, authentication);
 
         var header = createHeader(Map.of(
-                "jti", jti,
+                "jti", claimsSet.getJWTID(),
                 Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME));
         LOG.debug("Successfully Enhanced authentication token");
         return new PlainJWT(header, claimsSet);
     }
 
-    private PlainJWT createApprovalToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
+    private JWTClaimsSet createUserClaimSet(OAuth2AccessToken token, OAuth2Authentication authentication) {
+        LOG.debug("Generating JWT Claims Set");
+        var tokenInfo = extractAdditionalInformationFromToken(token.getTokenValue());
+        var jti = token.getTokenValue().substring(0, 32);
+        ClientDTO details = authentication.getDetails(ClientDTO.class);
 
+        JWTClaimsSet userClaims = new JWTClaimsSet.Builder()
+                .jwtID(jti)
+                .issuer(properties.openId().issuer())
+                .subject(tokenInfo.get("username"))
+                .audience(authentication.getPrincipal().toString())
+                .claim(AUTH_TIME, authentication.getAuthenticationTime())
+                .claim(SCOPES, authentication.getStoredRequest().getScope())
+                .claim(AUTHORITIES, authentication.getUserAuthentication().getAuthorities())
+                .issueTime(Date.from(Instant.now()))
+                .expirationTime(secondsFromNow(details.getAccessTokenValidity()))
+                .notBeforeTime(Date.from(Instant.now()))
+                .build();
+        return addFinalClaims(userClaims, authentication);
+    }
+
+    private JWTClaimsSet createClientClaimSet(OAuth2AccessToken token, OAuth2Authentication authentication) {
+        var tokenInfo = extractAdditionalInformationFromToken(token.getTokenValue());
+        var jti = token.getTokenValue().substring(0, 32);
+
+
+        JWTClaimsSet clientClaims = new JWTClaimsSet.Builder()
+                .jwtID(jti)
+                .issuer(properties.openId().issuer())
+                .subject(tokenInfo.get("username"))
+                .audience(authentication.getPrincipal().toString())
+                .claim(AUTH_TIME, authentication.getAuthenticationTime())
+                .claim(SCOPES, authentication.getStoredRequest().getScope())
+                .build();
+        return addFinalClaims(clientClaims, authentication);
+    }
+
+    private PlainJWT createApprovalToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
+        AuthorizationRequest storedRequest = authentication.getAuthorizationRequest().storedRequest();
         var payload = new JWTClaimsSet.Builder()
                 .jwtID(secretGenerator.generate(24))
                 .issuer(properties.openId().issuer())
                 .subject(authentication.getUserPrincipal().toString())
                 .audience(authentication.getPrincipal().toString())
-                .notBeforeTime(Date.from(Instant.ofEpochSecond(authentication.getAuthenticationTime())))
-                .claim("authorizationRequest",
-                        getObjectMapper().convertValue(authentication.getAuthorizationRequest().storedRequest(),
-                                new TypeReference<Map<String, Object>>() {
-                                }))
-                .claim("scopes", authentication.getAuthorizationRequest().storedRequest().getScopes())
+                .claim(AUTHORIZATION_REQUEST, getObjectMapper().convertValue(storedRequest, mapTypeReference()))
+                .claim(SCOPES, authentication.getAuthorizationRequest().storedRequest().getScope())
                 .issueTime(Date.from(Instant.now()))
-                .expirationTime(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
+                .expirationTime(minutesFromNow(3))
+                .notBeforeTime(Date.from(Instant.ofEpochSecond(authentication.getAuthenticationTime())))
                 .build();
         LOG.debug("Successfully Enhanced approval token");
         return new PlainJWT(
                 createHeader(Map.of(Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME)),
                 payload
         );
+    }
+
+    private JWTClaimsSet addFinalClaims(JWTClaimsSet claimsSet, OAuth2Authentication authentication) {
+        ClientDTO details = authentication.getDetails(ClientDTO.class);
+        return new JWTClaimsSet.Builder(claimsSet)
+                .notBeforeTime(Date.from(Instant.ofEpochSecond(authentication.getAuthenticationTime())))
+                .issueTime(Date.from(Instant.now()))
+                .expirationTime(secondsFromNow(details.getAccessTokenValidity()))
+                .build();
     }
 
     private PlainHeader createHeader(Map<String, Object> otherParams) {

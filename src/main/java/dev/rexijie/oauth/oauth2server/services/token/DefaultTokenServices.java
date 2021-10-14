@@ -61,8 +61,10 @@ public class DefaultTokenServices implements TokenServices {
             try {
                 var grantType = GrantType.parse(reqGrant);
                 if (grantType.equals(CLIENT_CREDENTIALS))
-                    return createClientCredentialsToken(clientAuthentication);
-                return createUserToken(clientId, userId, clientAuthentication);
+                    return createClientCredentialsToken(clientAuthentication)
+                            .doOnSuccess(auth2Token -> LOG.info("created client credentials token"));
+                return createUserToken(clientId, userId, clientAuthentication)
+                        .doOnSuccess(auth2Token -> LOG.info("created user access token"));
             } catch (ParseException e) {
                 throw Exceptions.propagate(INVALID_GRANT_ERROR);
             }
@@ -114,7 +116,7 @@ public class DefaultTokenServices implements TokenServices {
                     clientAuthentication.setDetails(clientDTO);
                     var userAuthentication = (OAuth2Authentication) clientAuthentication.getUserAuthentication();
                     userAuthentication.setDetails(userDTO);
-                    if (!clientDTO.getScopes().containsAll(clientAuthentication.getStoredRequest().getScopes()))
+                    if (!clientDTO.getScopes().containsAll(clientAuthentication.getStoredRequest().getScope()))
                         throw Exceptions.propagate(INVALID_SCOPE_ERROR);
                     return clientAuthentication;
                 })
@@ -127,12 +129,12 @@ public class DefaultTokenServices implements TokenServices {
     private OAuth2AccessToken createAccessToken(OAuth2Authentication auth) {
         LOG.debug("crating access token");
         Token token = generateToken(auth);
-        var clientData = (ClientDTO) auth.getDetails();
+        var clientData = auth.getDetails(ClientDTO.class);
         return new OAuth2AccessToken(BEARER,
                 token.getKey(),
                 Instant.now(),
                 Instant.now().plusSeconds(clientData.getAccessTokenValidity()),
-                auth.getStoredRequest().getScopes()); // TODO (modify to get scopes a user can have?)
+                auth.getStoredRequest().getScope());
     }
 
     protected TokenEnhancer getTokenEnhancer() {

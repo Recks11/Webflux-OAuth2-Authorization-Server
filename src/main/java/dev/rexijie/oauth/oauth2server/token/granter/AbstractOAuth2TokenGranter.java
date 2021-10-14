@@ -6,6 +6,8 @@ import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,6 +17,7 @@ import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.PASSWORD_ATTRIBU
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBUTE;
 
 public abstract class AbstractOAuth2TokenGranter implements TokenGranter {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractOAuth2TokenGranter.class);
 
     private final TokenServices tokenServices;
     private final ReactiveAuthenticationManager authenticationManager;
@@ -46,6 +49,7 @@ public abstract class AbstractOAuth2TokenGranter implements TokenGranter {
         OAuth2Authentication oAuth2Authentication = OAuth2Authentication.from(authentication);
         oAuth2Authentication.setAuthorizationRequest(authorizationRequest);
         oAuth2Authentication.setAuthenticationStage(AuthenticationStage.COMPLETE);
+        LOG.debug("created Authentication Token");
         return oAuth2Authentication;
     }
 

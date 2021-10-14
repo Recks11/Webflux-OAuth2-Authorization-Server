@@ -9,7 +9,6 @@ import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.util.DefaultUriBuilderFactory;
-import org.springframework.web.util.UriBuilderFactory;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
@@ -23,8 +22,11 @@ public abstract class OAuthEndpointHandler {
         return Mono.just(request.queryParams())
                 .map(MultiValueMap::toSingleValueMap)
                 .map(AuthorizationRequest::from)
-                .doOnNext(authorizationRequest -> LOG.info("converted to query from authorization request 1: {}", authorizationRequest))
-                .doOnError(throwable -> {throw Exceptions.propagate(throwable);});
+                .doOnNext(authorizationRequest -> LOG.debug("converted to query from authorization request 1: {}", authorizationRequest))
+                .doOnError(throwable -> {
+                    LOG.error("An error occurred while reading the authentication request");
+                    throw Exceptions.propagate(throwable);
+                });
     }
 
     protected Mono<AuthorizationRequest> extractAuthorizationFromBody(ServerRequest request) {
@@ -33,8 +35,11 @@ public abstract class OAuthEndpointHandler {
             return Mono.just(formMap.toSingleValueMap());
         })
                 .map(AuthorizationRequest::from)
-                .doOnNext(authorizationRequest -> LOG.info("converted to query from authorization request 2: {}", authorizationRequest))
-                .doOnError(throwable -> {throw Exceptions.propagate(throwable);});
+                .doOnNext(authorizationRequest -> LOG.debug("converted to query from authorization request 2: {}", authorizationRequest))
+                .doOnError(throwable -> {
+                    LOG.error("An error occurred while reading the authentication request");
+                    throw Exceptions.propagate(throwable);
+                });
     }
 
     protected Mono<ServerResponse> redirectTo(ServerRequest request, String path) {
