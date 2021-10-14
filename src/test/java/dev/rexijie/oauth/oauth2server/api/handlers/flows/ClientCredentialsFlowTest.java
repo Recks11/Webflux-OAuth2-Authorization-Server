@@ -21,7 +21,7 @@ public class ClientCredentialsFlowTest extends OAuthTest {
                 .uri(TOKEN_ENDPOINT)
                 .body(BodyInserters
                         .fromFormData(GRANT_TYPE, "client_credentials")
-                        .with("scopes", "read")
+                        .with(SCOPE, "read")
                         .with(CLIENT_ID, "test-client")
                         .with(CLIENT_SECRET, "secret")
                 ).exchange()

@@ -11,6 +11,8 @@ import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBU
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.GRANT_TYPE;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.SCOPE;
 
 public class ResourceOwnerPasswordFlowTests extends OAuthTest {
 
@@ -21,10 +23,10 @@ public class ResourceOwnerPasswordFlowTests extends OAuthTest {
                 .uri(TOKEN_ENDPOINT)
                 .body(
                         BodyInserters
-                                .fromFormData("grant_type", "password")
+                                .fromFormData(GRANT_TYPE, "password")
                                 .with(USERNAME_ATTRIBUTE, ModelMocks.testUser().getUsername())
                                 .with(PASSWORD_ATTRIBUTE, "password")
-                                .with("scopes", "read"))
+                                .with(SCOPE, "read"))
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(OAuth2TokenResponse.class)
