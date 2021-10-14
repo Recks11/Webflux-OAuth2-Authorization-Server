@@ -1,4 +1,7 @@
 # Webflux OAuth2 Authorization Server
+<a href="https://github.com/Recks11/Webflux-OAuth2-Authorization-Server/actions?query=branch%3Amain+event%3Apush">
+<img src="https://github.com/Recks11/Webflux-OAuth2-Authorization-Server/actions/workflows/build.yml/badge.svg?branch=main" alt="Build Status"/> </a>
+
 This is an OAuth2 authorization server written with Spring Boot capable of generating and granting JWTs. built with SpringWebflux
 
 
