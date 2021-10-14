@@ -8,11 +8,6 @@ public class Authority implements GrantedAuthority {
     private String name;
     private String description;
 
-    public Authority(AuthorityEnum authorityEnum) {
-        this.name = authorityEnum.getName();
-        this.description = authorityEnum.getDescription();
-    }
-
     public Authority() {
     }
 
@@ -26,6 +21,10 @@ public class Authority implements GrantedAuthority {
         this.id = UUID.randomUUID().toString();
         this.name = name;
         this.description = description;
+    }
+
+    public Authority(AuthorityEnum authorityEnum) {
+        this(authorityEnum.getName(), authorityEnum.getDescription());
     }
 
     public String getId() {

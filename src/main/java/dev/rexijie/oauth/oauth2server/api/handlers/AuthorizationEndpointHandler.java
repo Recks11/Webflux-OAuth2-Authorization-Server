@@ -205,7 +205,7 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
 
     private OAuth2Authentication checkApproval(OAuth2Authentication authentication) {
         AuthorizationRequest storedRequest = authentication.getStoredRequest();
-        Set<String> scopes = storedRequest.getScopes();
+        Set<String> scopes = storedRequest.getScope();
         Set<String> requestAttributeKeySet = storedRequest.getAttributes().keySet();
         var scopesGranted = requestAttributeKeySet
                 .stream().filter(key -> key.startsWith(SCOPE_PREFIX))

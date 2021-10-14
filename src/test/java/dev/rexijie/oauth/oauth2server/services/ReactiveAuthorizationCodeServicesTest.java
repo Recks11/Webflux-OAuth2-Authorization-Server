@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.CLIENT_AUTHENTICATION_METHOD;
 import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,6 +79,8 @@ class ReactiveAuthorizationCodeServicesTest extends TokenGranterTest {
                     assertThat(authentication.getPrincipal())
                             .isNotNull()
                             .isEqualTo(testClient().clientId());
+                    assertThat(authentication.getStoredRequest().getAttributes().remove(CLIENT_AUTHENTICATION_METHOD))
+                            .isNotNull();
                     assertThat(authentication.getStoredRequest())
                             .isEqualTo(authorizationRequest());
                 })

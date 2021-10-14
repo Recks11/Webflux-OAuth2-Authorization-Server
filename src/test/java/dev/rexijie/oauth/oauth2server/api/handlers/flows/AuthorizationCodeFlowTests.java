@@ -42,10 +42,13 @@ import java.util.Map;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.Cookies.SESSION_COOKIE_NAME;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.PASSWORD_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBUTE;
+import static dev.rexijie.oauth.oauth2server.token.claims.ClaimNames.Custom.AUTHORIZATION_REQUEST;
 import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.*;
+import static org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.NONCE;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AuthorizationCodeFlowTests extends OAuthTest {
@@ -141,13 +144,13 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .post()
                 .uri(TOKEN_ENDPOINT)
                 .body(BodyInserters.
-                        fromFormData("grant_type", "authorization_code")
-                        .with("code", "generated_code")
-                        .with("client_id", ModelMocks.testClient().clientId())
-                        .with("redirect_uri", ModelMocks.testClient().registeredRedirectUris().toArray(new String[]{})[0])
-                        .with("scopes", "read write")
-                        .with("nonce", "random_nonce_string")
-                        .with("state", "random_state"))
+                        fromFormData(GRANT_TYPE, "authorization_code")
+                        .with(CODE, "generated_code")
+                        .with(CLIENT_ID, ModelMocks.testClient().clientId())
+                        .with(REDIRECT_URI, ModelMocks.testClient().registeredRedirectUris().toArray(new String[]{})[0])
+                        .with(SCOPE, "read write")
+                        .with(NONCE, "random_nonce_string")
+                        .with(STATE, "random_state"))
                 .exchange()
                 .expectStatus().isOk()
                 .returnResult(OAuth2TokenResponse.class);
@@ -195,12 +198,12 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
         authentication.setAuthenticationStage(AuthenticationStage.COMPLETE);
         authentication.setAuthorizationRequest(new OAuth2AuthorizationRequest(
                 AuthorizationRequest.from(Map.of(
-                                "grant_type", "authorization_code",
-                                "redirect_uri", client.registeredRedirectUris().toArray()[0].toString(),
-                                "client_id", client.clientId(),
-                                "scopes", "read write",
-                                "state", "random_state",
-                                "nonce", "random_nonce_string")),
+                                GRANT_TYPE, "authorization_code",
+                                REDIRECT_URI, client.registeredRedirectUris().toArray()[0].toString(),
+                                CLIENT_ID, client.clientId(),
+                                SCOPE, "read write",
+                                STATE, "random_state",
+                                NONCE, "random_nonce_string")),
                 ModelMocks.Authentication.mockUserAuthentication(user)
         ));
         return new PlainJWT(
@@ -215,10 +218,10 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                         .subject(authentication.getUserPrincipal().toString())
                         .audience(authentication.getPrincipal().toString())
                         .notBeforeTime(new Date(authentication.getAuthenticationTime()))
-                        .claim("authorizationRequest",
+                        .claim(AUTHORIZATION_REQUEST,
                                 new ObjectMapper().convertValue(authentication.getAuthorizationRequest().storedRequest(),
                                         new MapType<String, Object>()))
-                        .claim("scopes", authentication.getAuthorizationRequest().storedRequest().getScopes())
+                        .claim(SCOPE, authentication.getAuthorizationRequest().storedRequest().getScope())
                         .issueTime(Date.from(Instant.now()))
                         .expirationTime(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
                         .build()

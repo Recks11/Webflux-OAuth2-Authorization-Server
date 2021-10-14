@@ -51,7 +51,7 @@ public class OAuth2ApprovalAuthorizationToken extends AbstractAuthenticationToke
         this.authorizedClientId = authorizationRequest.getClientId();
         this.authorizationRequest = authorizationRequest;
         approvalMap = new ConcurrentHashMap<>();
-        authorizationRequest.getScopes().forEach(scope -> approvalMap.put(scope, false));
+        authorizationRequest.getScope().forEach(scope -> approvalMap.put(scope, false));
     }
 
     public OAuth2ApprovalAuthorizationToken(Object principal, Object credentials, String authorizedClientId, Set<String> scopes) {

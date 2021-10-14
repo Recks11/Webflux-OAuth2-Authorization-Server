@@ -8,13 +8,17 @@ import dev.rexijie.oauth.oauth2server.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
@@ -27,17 +31,24 @@ import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.*;
+import static org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.NONCE;
 
 
 // TODO (convert to integration test)
 @SpringBootTest
 @AutoConfigureWebTestClient
+@EnableAutoConfiguration(exclude = {
+        MongoReactiveAutoConfiguration.class,
+        MongoReactiveDataAutoConfiguration.class,
+        MongoReactiveRepositoriesAutoConfiguration.class
+})
 @ActiveProfiles("test")
 public abstract class OAuthTest {
 
 
     @Autowired private WebTestClient webTestClient;
-    @Autowired private PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
     @MockBean protected UserRepository userRepository;
     @MockBean protected ClientRepository clientRepository;
@@ -50,6 +61,7 @@ public abstract class OAuthTest {
 
     @BeforeEach
     void initializeClient() {
+        passwordEncoder = new BCryptPasswordEncoder();
         var client = testClient();
         var user = testUser();
         when(clientRepository.findByClientId(client.clientId()))
@@ -95,13 +107,13 @@ public abstract class OAuthTest {
         var client = testClient();
         return new DefaultUriBuilderFactory().builder()
                 .path(AUTHORIZATION_ENDPOINT)
-                .queryParam("grant_type", "authorization_code")
-                .queryParam("response_type", "code")
-                .queryParam("redirect_uri", client.registeredRedirectUris().toArray()[0])
-                .queryParam("client_id", client.clientId())
-                .queryParam("scopes", "read write")
-                .queryParam("state", "random_state")
-                .queryParam("nonce", "random_nonce_string");
+                .queryParam(GRANT_TYPE, "authorization_code")
+                .queryParam(RESPONSE_TYPE, "code")
+                .queryParam(REDIRECT_URI, client.registeredRedirectUris().toArray()[0])
+                .queryParam(CLIENT_ID, client.clientId())
+                .queryParam(SCOPE, "read write")
+                .queryParam(STATE, "random_state")
+                .queryParam(NONCE, "random_nonce_string");
 
     }
 

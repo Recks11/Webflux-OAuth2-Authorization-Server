@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Objects;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -67,15 +67,9 @@ public class OAuth2TokenResponse implements Serializable {
     }
 
     public static OAuth2TokenResponse fromAccessToken(OAuth2AccessToken accessToken) {
-        String scopes = "";
-        for (String scope :
-                accessToken.getScopes()) {
-            scopes = scopes.concat(scope + " ");
-        }
-        scopes = scopes.trim();
         return new OAuth2TokenResponse(accessToken.getTokenValue(),
                 accessToken.getTokenType().getValue(),
-                scopes,
+                StringUtils.collectionToDelimitedString(accessToken.getScopes(), " "),
                 (int) Objects.requireNonNull(accessToken.getExpiresAt()).getEpochSecond() -
                         Objects.requireNonNull(accessToken.getIssuedAt()).getEpochSecond(),
                 null);

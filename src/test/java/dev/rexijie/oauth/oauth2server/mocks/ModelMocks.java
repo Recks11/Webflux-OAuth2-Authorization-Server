@@ -49,7 +49,7 @@ public class ModelMocks {
                 null,
                 "http://localhost:8080/meta/redirects.json",
                 "",
-                null,
+                "client_secret_basic",
                 3600,
                 false,
                 TimeUtils.localDateTimeToEpochSecond(LocalDateTime.now()),

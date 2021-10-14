@@ -18,6 +18,7 @@ import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import dev.rexijie.oauth.oauth2server.mocks.ServiceMocks;
 import dev.rexijie.oauth.oauth2server.model.Client;
 import dev.rexijie.oauth.oauth2server.model.User;
+import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.repository.AuthorizationCodeRepository;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
@@ -49,9 +50,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
+import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.CLIENT_AUTHENTICATION_METHOD;
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.Authentication.createClientAuthentication;
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultClient;
 import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultUser;
+import static dev.rexijie.oauth.oauth2server.token.claims.ClaimNames.Custom.AUTHORIZATION_REQUEST;
+import static dev.rexijie.oauth.oauth2server.token.claims.ClaimNames.Custom.SCOPES;
 
 @ExtendWith(MockitoExtension.class)
 public abstract class TokenGranterTest {
@@ -130,6 +134,9 @@ public abstract class TokenGranterTest {
                 authorizationRequest(),
                 ModelMocks.Authentication.mockUserAuthentication(ModelMocks.testUser())
         ));
+
+        clientAuth.getStoredRequest().setAttribute(CLIENT_AUTHENTICATION_METHOD,
+                ((ClientDTO) clientAuth.getDetails()).getTokenEndpointAuthenticationMethod());
         return clientAuth;
     }
 
@@ -141,10 +148,10 @@ public abstract class TokenGranterTest {
                 .subject(authentication.getUserPrincipal().toString())
                 .audience(authentication.getPrincipal().toString())
                 .notBeforeTime(Date.from(Instant.ofEpochSecond(authentication.getAuthenticationTime())))
-                .claim("authorizationRequest",
+                .claim(AUTHORIZATION_REQUEST,
                         new ObjectMapper().convertValue(authentication.getAuthorizationRequest().storedRequest(),
                                 new TypeReference<Map<String, Object>>() {}))
-                .claim("scopes", authentication.getAuthorizationRequest().storedRequest().getScopes())
+                .claim(SCOPES, authentication.getAuthorizationRequest().storedRequest().getScope())
                 .issueTime(Date.from(Instant.now()))
                 .expirationTime(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
                 .build();

@@ -14,12 +14,11 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.BadJWTException;
-import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
-import com.nimbusds.openid.connect.sdk.claims.ClaimsSet;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairContainer;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
+import dev.rexijie.oauth.oauth2server.token.verifier.UserTokenClaimsVerifierFactory;
 import org.springframework.security.oauth2.jwt.JwtException;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
@@ -27,8 +26,6 @@ import reactor.core.publisher.Mono;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
-import java.util.HashSet;
-import java.util.Set;
 
 import static dev.rexijie.oauth.oauth2server.util.JoseUtils.assertInstance;
 
@@ -37,7 +34,9 @@ public class NimbusdsJoseTokenSigner implements Signer {
     private final KeyPairStore<RSAPrivateKey, RSAPublicKey> keyPairStore;
     private final JWSSignerFactory jwsSignerFactory = new DefaultJWSSignerFactory();
     private final JWSVerifierFactory jwsVerifierFactory = new DefaultJWSVerifierFactory();
-//    private final DefaultJWTProcessor<?> jwtProcessor = new DefaultJWTProcessor<>();
+    //    private final DefaultJWTProcessor<?> jwtProcessor = new DefaultJWTProcessor<>();
+    private final UserTokenClaimsVerifierFactory claimsVerifierFactory =
+            new UserTokenClaimsVerifierFactory();
     private final OAuth2Properties properties;
 
     public NimbusdsJoseTokenSigner(KeyPairStore<RSAPrivateKey, RSAPublicKey> keyPairStore,
@@ -64,7 +63,7 @@ public class NimbusdsJoseTokenSigner implements Signer {
     }
 
     @Override
-    public Mono<String> sigh(String token) {
+    public Mono<String> sign(String token) {
         return deserialize(token)
                 .map(jwt -> assertInstance(jwt, PlainJWT.class))
                 .flatMap(this::sign);
@@ -103,18 +102,11 @@ public class NimbusdsJoseTokenSigner implements Signer {
 
     @Override
     public Mono<Void> verifyClaims(JWT signedJWT, OAuth2Authentication authentication) {
-        var audience = authentication.getPrincipal().toString();
-        JWTClaimsSetVerifier<?> claimsSetVerifier = new DefaultJWTClaimsVerifier<>(
-                new HashSet<>(Set.of(audience)),
-                new JWTClaimsSet.Builder()
-                        .audience(audience)
-                        .issuer(properties.openId().issuer())
-                        .build(),
-                Set.of(ClaimsSet.AUD_CLAIM_NAME, ClaimsSet.ISS_CLAIM_NAME),
-                null
-        );
         return Mono.create(monoSink -> {
             try {
+                var audience = authentication.getPrincipal().toString();
+                JWTClaimsSetVerifier<?> claimsSetVerifier = claimsVerifierFactory.getVerifier(audience,
+                        properties.openId().issuer());
                 claimsSetVerifier.verify(signedJWT.getJWTClaimsSet(), null);
                 monoSink.success();
             } catch (BadJWTException | ParseException e) {
@@ -147,7 +139,7 @@ public class NimbusdsJoseTokenSigner implements Signer {
                 .onErrorResume(throwable -> Mono.just(KeyUse.SIGNATURE))
                 .map(keyUse -> {
                     try {
-                        var key = buildKey(context, keyUse);
+                        var key = getKey(context, keyUse);
                         context.setParsedKey(key);
                         return context;
                     } catch (BadJWSException e) {
@@ -169,7 +161,7 @@ public class NimbusdsJoseTokenSigner implements Signer {
     }
 
     // build the signing key for the context with the provided use
-    private JWK buildKey(KeySigningContext context, KeyUse keyUse) throws BadJWSException {
+    private JWK getKey(KeySigningContext context, KeyUse keyUse) throws BadJWSException {
         var container = context.getContainer();
         String alg = container.getKeyAlgorithm();
         return switch (alg) {

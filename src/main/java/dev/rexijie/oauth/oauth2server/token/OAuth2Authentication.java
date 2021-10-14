@@ -117,6 +117,9 @@ public class OAuth2Authentication extends AbstractAuthenticationToken {
         return authenticationTime;
     }
 
+    public <T> T getDetails(Class<T> tClass) {
+        return tClass.cast(getDetails());
+    }
     @Override
     public void eraseCredentials() {
         super.eraseCredentials();

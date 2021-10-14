@@ -5,7 +5,7 @@ public enum AuthenticationStage {
     PENDING_APPROVAL("NEEDS APPROVAL"),
     COMPLETE("AUTHENTICATED");
 
-    private String stage;
+    private final String stage;
 
     AuthenticationStage(String stage) {
         this.stage = stage;

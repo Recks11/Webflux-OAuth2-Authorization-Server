@@ -21,6 +21,8 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.CLIENT_AUTHENTICATION_METHOD;
+
 /**
  * Authorization code services that creates and consumes authorization codes for the
  * autorization_code flow.
@@ -64,6 +66,8 @@ public class DefaultReactiveAuthorizationCodeServices implements ReactiveAuthori
                     })
                     .flatMap(c -> {
                         oAuth2Authentication.setDetails(c);
+                        oAuth2Authentication.getStoredRequest().setAttribute(CLIENT_AUTHENTICATION_METHOD,
+                                c.getTokenEndpointAuthenticationMethod());
                         return tokenServices.createAccessToken(oAuth2Authentication);
                     })
                     .flatMap(auth2Token -> {

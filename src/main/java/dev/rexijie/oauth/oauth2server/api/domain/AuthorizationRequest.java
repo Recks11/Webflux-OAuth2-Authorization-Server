@@ -15,7 +15,7 @@ public class AuthorizationRequest {
     private String responseType;
     private String clientId;
     private String redirectUri;
-    private Set<String> scopes = new HashSet<>();
+    private Set<String> scope = new HashSet<>();
     private String nonce;
     private String state;
     private String prompt;
@@ -28,24 +28,24 @@ public class AuthorizationRequest {
     public AuthorizationRequest() {
     }
 
-    public AuthorizationRequest(String grantType, String responseType, String clientId, String redirectUri, String scopes, String nonce, String state) {
+    public AuthorizationRequest(String grantType, String responseType, String clientId, String redirectUri, String scope, String nonce, String state) {
         this.grantType = grantType;
         this.responseType = responseType;
         this.clientId = clientId;
         this.redirectUri = redirectUri;
-        if (scopes != null)
-            this.scopes = new HashSet<>(Arrays.asList(scopes.split(" ")));
+        if (scope != null)
+            this.scope = new HashSet<>(Arrays.asList(scope.split(" ")));
         this.nonce = nonce;
         this.state = state;
     }
 
     public AuthorizationRequest(String grantType, String responseType,
                                 String clientId, String redirectUri,
-                                String scopes, String nonce,
+                                String scope, String nonce,
                                 String state, String prompt, String includeGrantedScopes,
                                 String responseMode, String codeChallenge,
                                 String codeChallengeMethod, Map<String, Object> attributes) {
-        this(grantType, responseType, clientId, redirectUri, scopes, nonce, state);
+        this(grantType, responseType, clientId, redirectUri, scope, nonce, state);
         this.prompt = prompt;
         this.includeGrantedScopes = includeGrantedScopes;
         this.responseMode = responseMode;
@@ -61,7 +61,7 @@ public class AuthorizationRequest {
                 paramsMap.remove("response_type"),
                 paramsMap.remove("client_id"),
                 paramsMap.remove("redirect_uri"),
-                paramsMap.remove("scopes"),
+                paramsMap.remove("scope"),
                 paramsMap.remove("nonce"),
                 paramsMap.remove("state"),
                 paramsMap.remove("prompt"),
@@ -95,8 +95,8 @@ public class AuthorizationRequest {
         return redirectUri;
     }
 
-    public Set<String> getScopes() {
-        return scopes;
+    public Set<String> getScope() {
+        return scope;
     }
 
 //    public void setScope(String scopes) {
@@ -111,8 +111,8 @@ public class AuthorizationRequest {
         return state;
     }
 
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
+    public void setScope(Set<String> scope) {
+        this.scope = scope;
     }
 
     public String getPrompt() {
@@ -155,7 +155,7 @@ public class AuthorizationRequest {
         AuthorizationRequest that = (AuthorizationRequest) o;
         return getGrantType().equals(that.getGrantType()) &&
                 getResponseType().equals(that.getResponseType()) && getClientId().equals(that.getClientId())
-                && Objects.equals(getRedirectUri(), that.getRedirectUri()) && getScopes().equals(that.getScopes())
+                && Objects.equals(getRedirectUri(), that.getRedirectUri()) && getScope().equals(that.getScope())
                 && Objects.equals(getNonce(), that.getNonce()) && Objects.equals(getState(), that.getState())
                 && Objects.equals(getPrompt(), that.getPrompt()) && Objects.equals(getIncludeGrantedScopes(),
                 that.getIncludeGrantedScopes()) && Objects.equals(getResponseMode(), that.getResponseMode()) &&
@@ -166,7 +166,7 @@ public class AuthorizationRequest {
     @Override
     public int hashCode() {
         return Objects.hash(getGrantType(), getResponseType(),
-                getClientId(), getRedirectUri(), getScopes(),
+                getClientId(), getRedirectUri(), getScope(),
                 getNonce(), getState(), getPrompt(),
                 getIncludeGrantedScopes(), getResponseMode(),
                 getCodeChallenge(), getCodeChallengeMethod(),
@@ -180,7 +180,7 @@ public class AuthorizationRequest {
                 ", responseType='" + responseType + '\'' +
                 ", clientId='" + clientId + '\'' +
                 ", redirectUri='" + redirectUri + '\'' +
-                ", scopes=" + scopes +
+                ", scopes=" + scope +
                 ", nonce='" + nonce + '\'' +
                 ", state='" + state + '\'' +
                 ", prompt='" + prompt + '\'' +
