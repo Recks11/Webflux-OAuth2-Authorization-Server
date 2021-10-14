@@ -1,4 +1,4 @@
-name: Feature Pushed
+name: Build
 
 on:
   push:
