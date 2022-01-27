@@ -10,7 +10,12 @@ eureka:
 spring:
   data:
     mongodb:
-      uri: mongodb+srv://${MONGO_USERNAME}:${MONGO_PASSWORD}@oauth2-cluster.gvdxn.mongodb.net/authserver?retryWrites=true&w=majority
       auto-index-creation: true
+      host: 127.0.0.1
+      port: 27017
+      username: auth-server-app
+      password: app-password
+      database: auth-server
+
 server:
   port: 8000

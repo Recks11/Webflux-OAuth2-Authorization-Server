@@ -1,0 +1,17 @@
+version: "3.1"
+
+services:
+  mongo:
+    image: mongo:5.0.5
+    container_name: mongo-local
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: kajbfiuwniowbiu2332
+    volumes:
+      - "mongo-local-data:/data/db"
+      - "./docker-entrypoint-initdb:/docker-entrypoint-initdb.d:ro"
+    ports:
+      - "27017:27017"
+
+volumes:
+  mongo-local-data:
