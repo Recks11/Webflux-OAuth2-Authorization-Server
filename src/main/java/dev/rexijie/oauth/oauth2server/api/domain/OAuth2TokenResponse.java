@@ -18,6 +18,8 @@ public class OAuth2TokenResponse implements Serializable {
     private long expiresIn;
     private String refreshToken;
 
+    public OAuth2TokenResponse() {}
+
     public OAuth2TokenResponse(String accessToken, String tokenType, String scope, long expiresIn, String refreshToken) {
         this.accessToken = accessToken;
         this.tokenType = tokenType;

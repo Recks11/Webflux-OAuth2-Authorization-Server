@@ -12,9 +12,9 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -33,11 +33,11 @@ import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.*;
 import static org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.NONCE;
-
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity;
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 // TODO (convert to integration test)
 @SpringBootTest
-@AutoConfigureWebTestClient
 @EnableAutoConfiguration(exclude = {
         MongoReactiveAutoConfiguration.class,
         MongoReactiveDataAutoConfiguration.class,
@@ -47,7 +47,9 @@ import static org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.NO
 public abstract class OAuthTest {
 
 
-    @Autowired private WebTestClient webTestClient;
+    @Autowired private ApplicationContext context;
+    private WebTestClient webClient;
+    private WebTestClient authWebClient;
     private PasswordEncoder passwordEncoder;
 
     @MockBean protected UserRepository userRepository;
@@ -61,6 +63,17 @@ public abstract class OAuthTest {
 
     @BeforeEach
     void initializeClient() {
+        this.authWebClient = WebTestClient
+                .bindToApplicationContext(context)
+                .apply(springSecurity())
+                .configureClient()
+                .filter(basicAuthentication("test-client", "secret"))
+                .build();
+
+        this.webClient = WebTestClient.bindToApplicationContext(context)
+                .configureClient()
+                .build();
+
         passwordEncoder = new BCryptPasswordEncoder();
         var client = testClient();
         var user = testUser();
@@ -88,13 +101,11 @@ public abstract class OAuthTest {
     }
 
     public WebTestClient apiClient() {
-        return webTestClient;
+        return webClient;
     }
 
     public WebTestClient authClient() {
-        return webTestClient.mutate()
-                .defaultHeader("Authorization", "Basic %s".formatted(getBasicCredentials()))
-                .build();
+        return this.authWebClient;
     }
 
     public String getBasicCredentials() {
