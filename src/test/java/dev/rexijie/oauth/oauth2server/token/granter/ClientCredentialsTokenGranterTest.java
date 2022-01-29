@@ -4,6 +4,7 @@ import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
+import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -23,7 +24,7 @@ class ClientCredentialsTokenGranterTest extends TokenGranterTest {
 
     TokenGranter tokenGranter;
 
-//    @Test
+    @Test
     void grantToken() {
 
         Mono<OAuth2Token> oAuth2TokenMono = tokenGranter.grantToken(clientAuthentication(),
@@ -44,14 +45,8 @@ class ClientCredentialsTokenGranterTest extends TokenGranterTest {
                 reactiveClientAuthenticationManager
         );
 
-        when(clientRepository.findByClientId(eq(testClient().clientId())))
-                .thenReturn(Mono.just(testClient()));
-
-        when(userRepository.findByUsername(any()))
-                .thenReturn(Mono.empty());
-
-//        when(tokenEnhancer.enhance(any(), any(Authentication.class)))
-//                .then(returnsMonoAtArg());
+        when(tokenEnhancer.enhance(any(), any(Authentication.class)))
+                .then(returnsMonoAtArg());
     }
 
     @Override
@@ -60,5 +55,20 @@ class ClientCredentialsTokenGranterTest extends TokenGranterTest {
                 "grant_type", "client_credentials",
                 "scope", "read write")
         );
+    }
+
+    @Override
+    protected OAuth2Authentication clientAuthentication() {
+        var auth = createClientAuthentication(ModelMocks.getDefaultClient(
+                encoder.encode("secret")
+        ));
+        auth.setAuthenticationStage(AuthenticationStage.COMPLETE);
+        auth.setAuthorizationRequest(
+                new OAuth2AuthorizationRequest(
+                        authorizationRequest(),
+                        null
+                )
+        );
+        return auth;
     }
 }

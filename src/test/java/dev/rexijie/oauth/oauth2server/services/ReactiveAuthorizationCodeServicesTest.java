@@ -3,6 +3,7 @@ package dev.rexijie.oauth.oauth2server.services;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthorizationCodeWrapper;
 import dev.rexijie.oauth.oauth2server.generators.RandomStringSecretGenerator;
+import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.granter.TokenGranterTest;
 import org.junit.jupiter.api.Test;
@@ -69,9 +70,9 @@ class ReactiveAuthorizationCodeServicesTest extends TokenGranterTest {
                 .thenReturn(Mono.just(true));
 
         when(codeRepository.findByCode(any(String.class)))
-                .thenReturn(Mono.just(authenticationWrapper()));
-
-        Mono<OAuth2Authentication> created_code = authorizationCodeServices.consumeAuthorizationCode("created_code", clientAuthentication());
+                .thenReturn(authenticationWrapper());
+        var clientAuthentication = clientAuthentication();
+        Mono<OAuth2Authentication> created_code = authorizationCodeServices.consumeAuthorizationCode("created_code", clientAuthentication);
         StepVerifier.create(created_code)
                 .consumeNextWith(authentication -> {
                     assertThat(authentication.getUserPrincipal())
@@ -79,10 +80,13 @@ class ReactiveAuthorizationCodeServicesTest extends TokenGranterTest {
                     assertThat(authentication.getPrincipal())
                             .isNotNull()
                             .isEqualTo(testClient().clientId());
-                    assertThat(authentication.getStoredRequest().getAttributes().remove(CLIENT_AUTHENTICATION_METHOD))
+                    assertThat(authentication.getStoredRequest().getAttribute(CLIENT_AUTHENTICATION_METHOD))
                             .isNotNull();
+                    var authMethod = clientAuthentication.getDetails(ClientDTO.class).getTokenEndpointAuthenticationMethod();
+                    var authorizationRequest = authorizationRequest();
+                    authorizationRequest.setAttribute(CLIENT_AUTHENTICATION_METHOD, authMethod);
                     assertThat(authentication.getStoredRequest())
-                            .isEqualTo(authorizationRequest());
+                            .isEqualTo(authorizationRequest);
                 })
                 .verifyComplete();
 

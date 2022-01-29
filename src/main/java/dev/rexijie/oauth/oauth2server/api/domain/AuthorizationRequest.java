@@ -96,7 +96,7 @@ public class AuthorizationRequest {
     }
 
     public Set<String> getScope() {
-        return scope;
+        return Set.copyOf(scope);
     }
 
 //    public void setScope(String scopes) {
@@ -136,7 +136,7 @@ public class AuthorizationRequest {
     }
 
     public Map<String, Object> getAttributes() {
-        return attributes;
+        return Map.copyOf(attributes);
     }
 
     @JsonIgnore
@@ -153,14 +153,17 @@ public class AuthorizationRequest {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AuthorizationRequest that = (AuthorizationRequest) o;
-        return getGrantType().equals(that.getGrantType()) &&
-                getResponseType().equals(that.getResponseType()) && getClientId().equals(that.getClientId())
-                && Objects.equals(getRedirectUri(), that.getRedirectUri()) && getScope().equals(that.getScope())
-                && Objects.equals(getNonce(), that.getNonce()) && Objects.equals(getState(), that.getState())
-                && Objects.equals(getPrompt(), that.getPrompt()) && Objects.equals(getIncludeGrantedScopes(),
-                that.getIncludeGrantedScopes()) && Objects.equals(getResponseMode(), that.getResponseMode()) &&
-                Objects.equals(getCodeChallenge(), that.getCodeChallenge()) && Objects.equals(getCodeChallengeMethod(),
-                that.getCodeChallengeMethod()) && Objects.equals(getAttributes(), that.getAttributes());
+        return Objects.equals(grantType, that.grantType) &&
+                Objects.equals(responseType, that.responseType) &&
+                Objects.equals(clientId, that.clientId) &&
+                Objects.equals(redirectUri, that.redirectUri) &&
+                Objects.equals(scope, that.scope) &&
+                Objects.equals(nonce, that.nonce) &&
+                Objects.equals(state, that.state) &&
+                Objects.equals(prompt, that.prompt) &&
+                Objects.equals(includeGrantedScopes, that.includeGrantedScopes) &&
+                Objects.equals(responseMode, that.responseMode) && Objects.equals(codeChallenge, that.codeChallenge) &&
+                Objects.equals(codeChallengeMethod, that.codeChallengeMethod) && Objects.equals(attributes, that.attributes);
     }
 
     @Override
@@ -170,7 +173,7 @@ public class AuthorizationRequest {
                 getNonce(), getState(), getPrompt(),
                 getIncludeGrantedScopes(), getResponseMode(),
                 getCodeChallenge(), getCodeChallengeMethod(),
-                getAttributes());
+                this.attributes);
     }
 
     @Override

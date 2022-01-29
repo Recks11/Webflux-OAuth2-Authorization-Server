@@ -43,6 +43,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.token.Token;
 import org.springframework.security.core.token.TokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
@@ -60,10 +61,14 @@ import static dev.rexijie.oauth.oauth2server.token.claims.ClaimNames.Custom.SCOP
 @ExtendWith(MockitoExtension.class)
 public abstract class TokenGranterTest {
 
-    @Mock protected UserRepository userRepository;
-    @Mock protected ClientRepository clientRepository;
-    @Mock protected AuthorizationCodeRepository codeRepository;
-    @Mock protected TokenEnhancer tokenEnhancer;
+    @Mock
+    protected UserRepository userRepository;
+    @Mock
+    protected ClientRepository clientRepository;
+    @Mock
+    protected AuthorizationCodeRepository codeRepository;
+    @Mock
+    protected TokenEnhancer tokenEnhancer;
     protected ClientService clientService;
     protected TokenService tokenService;
     protected TokenServices tokenServices;
@@ -80,7 +85,7 @@ public abstract class TokenGranterTest {
         tokenService = ServiceMocks.ConfigBeans.testTokenService();
 
         clientService = new DefaultClientService(
-                clientRepository, ServiceMocks.ConfigBeans.credentialsGenerator(),  encoder);
+                clientRepository, ServiceMocks.ConfigBeans.credentialsGenerator(), encoder);
 
         tokenServices = new DefaultTokenServices(
                 clientService,
@@ -108,24 +113,26 @@ public abstract class TokenGranterTest {
         return getDefaultUser(encoder.encode("password"));
     }
 
-    protected AuthorizationCodeWrapper authenticationWrapper() {
+    protected Mono<AuthorizationCodeWrapper> authenticationWrapper() {
         var add = new DefaultReactiveAuthorizationCodeServices(clientService, tokenService, codeRepository, secretGenerator,
                 tokenServices);
         try {
-            var token = getMockToken();
-            var additionalInfo = add.createAdditionalInformation(token);
-            Token token1 = tokenService.allocateToken(additionalInfo);
-            return new EncryptedCodeAuthorizationCodeWrapper("authentication_code",
-                    token1.getKey().getBytes(StandardCharsets.UTF_8));
+            return getMockToken()
+                    .map(token -> {
+                        var additionalInfo = add.createAdditionalInformation(token);
+                        Token token1 = tokenService.allocateToken(additionalInfo);
+                        return new EncryptedCodeAuthorizationCodeWrapper("authentication_code",
+                                token1.getKey().getBytes(StandardCharsets.UTF_8));
+                    });
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    protected String getMockToken() {
+    protected Mono<String> getMockToken() {
         Signer jwtSigner = new NimbusdsJoseTokenSigner(new InMemoryRSAKeyPairStore(KeyGen.generateRSAKeys())
-                ,ServiceMocks.ConfigBeans.mockProperties());
-        return jwtSigner.sign(createApprovalToken()).block();
+                , ServiceMocks.ConfigBeans.mockProperties());
+        return jwtSigner.sign(createApprovalToken());
     }
 
     protected OAuth2Authentication clientAuthentication() {
@@ -150,7 +157,8 @@ public abstract class TokenGranterTest {
                 .notBeforeTime(Date.from(Instant.ofEpochSecond(authentication.getAuthenticationTime())))
                 .claim(AUTHORIZATION_REQUEST,
                         new ObjectMapper().convertValue(authentication.getAuthorizationRequest().storedRequest(),
-                                new TypeReference<Map<String, Object>>() {}))
+                                new TypeReference<Map<String, Object>>() {
+                                }))
                 .claim(SCOPES, authentication.getAuthorizationRequest().storedRequest().getScope())
                 .issueTime(Date.from(Instant.now()))
                 .expirationTime(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))

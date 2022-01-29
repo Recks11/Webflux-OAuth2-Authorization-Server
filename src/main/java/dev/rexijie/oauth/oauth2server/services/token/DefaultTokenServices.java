@@ -55,14 +55,17 @@ public class DefaultTokenServices implements TokenServices {
     @Override
     public Mono<OAuth2Token> createAccessToken(Authentication authentication) {
         if (authentication instanceof OAuth2Authentication clientAuthentication) {
-            var clientId = authentication.getPrincipal().toString();
-            var userId = clientAuthentication.getUserPrincipal().toString();
-            var reqGrant = clientAuthentication.getStoredRequest().getGrantType();
             try {
+                var reqGrant = clientAuthentication.getStoredRequest().getGrantType();
                 var grantType = GrantType.parse(reqGrant);
-                if (grantType.equals(CLIENT_CREDENTIALS))
+                if (grantType.equals(CLIENT_CREDENTIALS)) {
                     return createClientCredentialsToken(clientAuthentication)
                             .doOnSuccess(auth2Token -> LOG.info("created client credentials token"));
+                }
+
+                var clientId = authentication.getPrincipal().toString();
+                var userId = clientAuthentication.getUserPrincipal().toString();
+
                 return createUserToken(clientId, userId, clientAuthentication)
                         .doOnSuccess(auth2Token -> LOG.info("created user access token"));
             } catch (ParseException e) {

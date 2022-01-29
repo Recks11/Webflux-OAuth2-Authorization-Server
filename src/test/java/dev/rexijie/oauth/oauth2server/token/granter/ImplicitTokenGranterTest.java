@@ -65,8 +65,8 @@ class ImplicitTokenGranterTest extends TokenGranterTest {
                 "nonce",
                 "random_state"
         );
-        ar.getAttributes().put(USERNAME_ATTRIBUTE, "rexijie");
-        ar.getAttributes().put(PASSWORD_ATTRIBUTE, "password");
+        ar.setAttribute(USERNAME_ATTRIBUTE, "rexijie");
+        ar.setAttribute(PASSWORD_ATTRIBUTE, "password");
 
         return ar;
     }

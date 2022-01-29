@@ -8,6 +8,7 @@ import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2Token;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.CLIENT_AUTHENTICATION_METHOD;
@@ -25,28 +26,25 @@ public class AuthorizationCodeTokenGranter extends AbstractOAuth2TokenGranter {
     }
 
     @Override
-    public Mono<Void> validateRequest(AuthorizationRequest request) {
+    public Mono<AuthorizationRequest> validateRequest(AuthorizationRequest request) {
         if (request.getAttribute("code") == null)
-            return Mono.error(new OAuthError(INVALID_REQUEST, "missing authorization code"));
+            throw Exceptions.propagate(new OAuthError(INVALID_REQUEST, "missing authorization code"));
         if (request.getRedirectUri() == null)
-            return Mono.error(new OAuthError(INVALID_REQUEST, "missing redirect_uri"));
+            throw Exceptions.propagate(new OAuthError(INVALID_REQUEST, "missing redirect_uri"));
 //        if (request.getAttribute(CLIENT_AUTHENTICATION_METHOD) == null)
 //            return Mono.error(new OAuthError(UNAUTHORIZED_CLIENT, "missing client authentication"));
-        return Mono.empty();
+        return Mono.just(request);
     }
 
     @Override
     // TODO (Authenticate client before generating token)
-    // a code has to be bound to a client and user authentication.
+    // TODO a code has to be bound to a client and user authentication.
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
-        return Mono.just(authorizationRequest)
-                .doOnNext(this::validateRequest)
+        return validateRequest(authorizationRequest)
                 .flatMap(request -> {
                     String code = request.getAttribute("code");
                     return authorizationCodeServices.consumeAuthorizationCode(code, authentication)
-                            .flatMap(auth -> {
-                                return getTokenServices().createAccessToken(auth);
-                            });
+                            .flatMap(auth -> getTokenServices().createAccessToken(auth));
                 });
     }
 

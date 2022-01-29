@@ -18,10 +18,10 @@ public class ImplicitTokenGranter extends AbstractOAuth2TokenGranter {
     }
 
     @Override
-    public Mono<Void> validateRequest(AuthorizationRequest request) {
+    public Mono<AuthorizationRequest> validateRequest(AuthorizationRequest request) {
         if (!AuthorizationGrantType.IMPLICIT.equals(new AuthorizationGrantType(request.getGrantType())))
             throw Exceptions.propagate(INVALID_GRANT_ERROR);
-        return Mono.empty();
+        return Mono.just(request);
     }
 
     @Override

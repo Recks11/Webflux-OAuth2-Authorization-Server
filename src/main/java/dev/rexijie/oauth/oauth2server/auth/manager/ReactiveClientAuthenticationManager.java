@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import reactor.core.publisher.Mono;
 
+import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.CLIENT_AUTHENTICATION_METHOD;
 import static dev.rexijie.oauth.oauth2server.model.dto.ClientDTO.ClientMapper.toDto;
 
 public class ReactiveClientAuthenticationManager extends AbstractUserDetailsReactiveAuthenticationManager {
@@ -27,16 +28,25 @@ public class ReactiveClientAuthenticationManager extends AbstractUserDetailsReac
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
         return super.authenticate(authentication)
-                .map(this::convertTokenToOAuth2Token);
+                .map(auth -> mergeAuthentication(auth, authentication));
     }
 
-    private OAuth2Authentication convertTokenToOAuth2Token(Authentication authentication) {
-        ClientUserDetails clientUserDetails = (ClientUserDetails) authentication.getPrincipal();
+    private OAuth2Authentication mergeAuthentication(Authentication authenticatedAuth, Authentication initialAuth) {
+        ClientUserDetails clientUserDetails = (ClientUserDetails) authenticatedAuth.getPrincipal();
+
         OAuth2Authentication auth = new OAuth2Authentication(clientUserDetails.clientData().clientId(),
                 "[YOU THOUGHT!!]",
-                authentication.getAuthorities());
-        auth.setAuthenticated(authentication.isAuthenticated());
+                authenticatedAuth.getAuthorities());
+        auth.setAuthenticated(authenticatedAuth.isAuthenticated());
+        if (initialAuth instanceof OAuth2Authentication iAuth) {
+            auth.setAuthorizationRequest(iAuth.getAuthorizationRequest());
+        }
         auth.setDetails(toDto(clientUserDetails.clientData()));
+
+        String tokenEndpointAuthenticationMethod = clientUserDetails.clientData().tokenEndpointAuthMethod();
+        if (tokenEndpointAuthenticationMethod == null) tokenEndpointAuthenticationMethod = "none";
+
+        auth.getStoredRequest().setAttribute(CLIENT_AUTHENTICATION_METHOD, tokenEndpointAuthenticationMethod);
         return auth;
     }
 

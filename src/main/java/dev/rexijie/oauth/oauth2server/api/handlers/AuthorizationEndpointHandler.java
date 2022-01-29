@@ -26,6 +26,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.WebSession;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.net.URI;
 import java.security.Principal;
@@ -103,6 +104,7 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
     // path POST /oauth/authorize
     public Mono<ServerResponse> authorizeRequest(ServerRequest request) {
         return request.session()
+                .publishOn(Schedulers.boundedElastic())
                 .zipWith(extractAuthorizationFromBody(request), (session, authorizationRequest) -> {
                     AuthorizationRequest storedRequest = session.getAttribute(AuthorizationRequest.AUTHORIZATION_SESSION_ATTRIBUTE);
                     if (storedRequest == null) {
@@ -111,7 +113,6 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
                         throw new OAuthError(null, "invalid_request", "Session not started"); // TODO (Make better error)
                     }
 
-//                    storedRequest.getAttributes().putAll(authorizationRequest.getAttributes()); // add credentials to stored request
                     storedRequest.setAttribute(USERNAME_ATTRIBUTE, authorizationRequest.getAttribute(USERNAME_ATTRIBUTE));
                     storedRequest.setAttribute(PASSWORD_ATTRIBUTE, authorizationRequest.getAttribute(PASSWORD_ATTRIBUTE));
                     return storedRequest;
@@ -148,8 +149,8 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
 
     private Mono<Authentication> authenticateRequest(AuthorizationRequest authorizationRequest) {
         return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                        authorizationRequest.getAttributes().remove(USERNAME_ATTRIBUTE),
-                        authorizationRequest.getAttributes().remove(PASSWORD_ATTRIBUTE)
+                        authorizationRequest.getAttributes().get(USERNAME_ATTRIBUTE),
+                        authorizationRequest.getAttributes().get(PASSWORD_ATTRIBUTE)
                 )).cast(OAuth2Authentication.class)
                 .map(oAuth2Authentication -> {
                     oAuth2Authentication.setAuthenticationStage(AuthenticationStage.COMPLETE);
@@ -174,6 +175,7 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
                             return userAuth;
                         })
                 .map(this::checkApproval)
+                .publishOn(Schedulers.boundedElastic())
                 .doOnError(throwable -> {
                     request.session().doOnNext(WebSession::invalidate).subscribe();
                     throw Exceptions.propagate(new OAuthError(throwable, 400, "unauthorized_client",

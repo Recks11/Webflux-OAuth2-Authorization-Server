@@ -17,37 +17,35 @@ import static dev.rexijie.oauth.oauth2server.error.OAuthError.INVALID_GRANT_ERRO
 
 public class ClientCredentialsTokenGranter extends AbstractOAuth2TokenGranter {
 
-    public ClientCredentialsTokenGranter(TokenServices tokenServices, ReactiveAuthenticationManager authenticationManager) {
+    public ClientCredentialsTokenGranter(TokenServices tokenServices,
+                                         ReactiveAuthenticationManager authenticationManager) {
         super(tokenServices, authenticationManager);
     }
 
     @Override
-    public Mono<Void> validateRequest(AuthorizationRequest request) {
+    public Mono<AuthorizationRequest> validateRequest(AuthorizationRequest request) {
         if (!new AuthorizationGrantType(request.getGrantType()).equals(AuthorizationGrantType.CLIENT_CREDENTIALS))
             return Mono.error(INVALID_GRANT_ERROR);
-        return Mono.empty();
+        return Mono.just(request);
     }
 
     @Override
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
         return validateRequest(authorizationRequest)
-                .then(Mono.fromCallable(() -> createAuthenticationToken(authentication, new OAuth2AuthorizationRequest(
-                        authorizationRequest, authentication
-                ))))
+                .map(validRequest -> createAuthenticationToken(authentication,
+                        new OAuth2AuthorizationRequest(authorizationRequest, authentication)))
                 .flatMap(credentials -> getTokenServices().createAccessToken(credentials));
     }
 
     @Override
-    protected OAuth2Authentication createAuthenticationToken(Authentication authentication, OAuth2AuthorizationRequest authorizationRequest) {
+    protected OAuth2Authentication createAuthenticationToken(Authentication authentication,
+                                                             OAuth2AuthorizationRequest authorizationRequest) {
         OAuth2Authentication oAuth2Authentication = OAuth2Authentication.from(authentication);
-        oAuth2Authentication.setAuthorizationRequest(authorizationRequest);
         oAuth2Authentication.setAuthenticationStage(AuthenticationStage.COMPLETE);
-        var d = (ClientDTO) oAuth2Authentication.getDetails();
-        String tokenEndpointAuthenticationMethod = d.getTokenEndpointAuthenticationMethod();
-        if (tokenEndpointAuthenticationMethod == null) tokenEndpointAuthenticationMethod = "none";
-
-        oAuth2Authentication.getStoredRequest().setAttribute(CLIENT_AUTHENTICATION_METHOD,
-                tokenEndpointAuthenticationMethod);
+        // TODO make sure to validate authReqyest and passed reqyest
+//        if (oAuth2Authentication.getStoredRequest().equals(authorizationRequest.storedRequest())) {
+            oAuth2Authentication.setAuthorizationRequest(authorizationRequest);
+//        }
 
         return oAuth2Authentication;
 

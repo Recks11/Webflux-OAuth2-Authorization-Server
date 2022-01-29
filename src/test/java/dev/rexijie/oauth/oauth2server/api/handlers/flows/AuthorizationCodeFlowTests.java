@@ -37,6 +37,7 @@ import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.Cookies.SESSION_COOKIE_NAME;
@@ -67,7 +68,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .then(returnsMonoAtArg());
 
         when(codeRepository.findByCode(any(String.class)))
-                .thenReturn(Mono.just(getAuthenticationWrapper()));
+                .thenReturn(getAuthenticationWrapper());
     }
 
     @Test
@@ -157,7 +158,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
 
         StepVerifier.create(tokenResponse.getResponseBody())
                 .assertNext(oAuth2TokenResponse -> {
-                    assertThat(oAuth2TokenResponse.getScope()).isEqualTo("read write");
+                    assertThat(oAuth2TokenResponse.getScope().split(" ")).containsAll(List.of("read", "write"));
                     assertThat(oAuth2TokenResponse.getAccessToken()).isNotNull();
                     assertThat(oAuth2TokenResponse.getTokenType()).isEqualToIgnoringCase("bearer");
 //                    assertThat(oAuth2TokenResponse.getRefreshToken()).isNotNull();
@@ -181,14 +182,13 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .returnResult(Object.class);
     }
 
-    private AuthorizationCodeWrapper getAuthenticationWrapper() {
+    private Mono<AuthorizationCodeWrapper> getAuthenticationWrapper() {
         var add = new DefaultReactiveAuthorizationCodeServices(null, null, null, null,
                 null);
 
-        var tokenValue = signer.sign(mockToken()).block();
-        return new EncryptedCodeAuthorizationCodeWrapper("authentication_code",
-                tokenService.allocateToken(add.createAdditionalInformation(tokenValue)).getKey()
-                        .getBytes(StandardCharsets.UTF_8));
+        return signer.sign(mockToken()).map(value -> new EncryptedCodeAuthorizationCodeWrapper("authentication_code",
+                tokenService.allocateToken(add.createAdditionalInformation(value)).getKey()
+                        .getBytes(StandardCharsets.UTF_8)));
     }
 
     private PlainJWT mockToken() {

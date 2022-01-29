@@ -1,10 +1,10 @@
 package dev.rexijie.oauth.oauth2server.auth;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
+import dev.rexijie.oauth.oauth2server.auth.converter.HttpBasicAuthenticationConverter;
 import dev.rexijie.oauth.oauth2server.auth.converter.ServerClientSecretPostAuthenticationConverter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
-import org.springframework.security.web.server.authentication.ServerHttpBasicAuthenticationConverter;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -19,15 +19,16 @@ import java.util.Map;
 public class AuthenticationServerAuthenticationConverter implements ServerAuthenticationConverter {
     private final Map<ClientAuthenticationMethod, ServerAuthenticationConverter> converterMap;
 
+    private final ReactiveClientAuthenticationMethodResolver clientAuthenticationMethodResolver;
+
     public AuthenticationServerAuthenticationConverter() {
         converterMap = Map.of(
-                ClientAuthenticationMethod.CLIENT_SECRET_BASIC, new ServerHttpBasicAuthenticationConverter(),
+                ClientAuthenticationMethod.CLIENT_SECRET_BASIC, new HttpBasicAuthenticationConverter(),
                 ClientAuthenticationMethod.CLIENT_SECRET_POST, new ServerClientSecretPostAuthenticationConverter()
         );
+        clientAuthenticationMethodResolver =
+                new DefaultClientAuthenticationMethodResolver();
     }
-
-    private final ReactiveClientAuthenticationMethodResolver clientAuthenticationMethodResolver =
-            new DefaultClientAuthenticationMethodResolver();
 
     @Override
     public Mono<Authentication> convert(ServerWebExchange exchange) {

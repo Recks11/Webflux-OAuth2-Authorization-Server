@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static dev.rexijie.oauth.oauth2server.error.OAuthError.*;
@@ -26,28 +27,27 @@ public class CompositeTokenGranter implements TokenGranter {
                                  @Qualifier("clientAuthenticationManager") ReactiveAuthenticationManager clientAuthenticationManager,
                                  ReactiveAuthorizationCodeServices authorizationCodeServices) {
 
-        this.tokenGranterMap = Map.of(
+        this.tokenGranterMap = Collections.synchronizedMap(Map.of(
                 AuthorizationGrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenServices, userAuthenticationManager),
                 AuthorizationGrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenServices, authorizationCodeServices),
                 AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenServices, clientAuthenticationManager)
-        );
+        ));
     }
 
     @Override
-    public Mono<Void> validateRequest(AuthorizationRequest request) {
+    public Mono<AuthorizationRequest> validateRequest(AuthorizationRequest request) {
         if (request.getScope().isEmpty()) return Mono.error(INVALID_SCOPE_ERROR);
         if (request.getGrantType() == null) return Mono.error(INVALID_REQUEST_ERROR);
-        return Mono.empty();
+        return Mono.just(request);
     }
 
     @Override
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
-        Mono<OAuth2Token> tokenGranterMono = Mono.just(tokenGranterMap)
-                .map(granters -> getTokenGranterForRequest(granters, authorizationRequest))
-                .flatMap(tokenGranter -> tokenGranter.grantToken(authentication, authorizationRequest));
-
         return validateRequest(authorizationRequest)
-                .then(tokenGranterMono);
+                .flatMap(validReq -> {
+                    var granter = getTokenGranterForRequest(tokenGranterMap, validReq);
+                    return granter.grantToken(authentication, validReq);
+                });
     }
 
     private TokenGranter getTokenGranterForRequest(Map<AuthorizationGrantType, TokenGranter> tokenGranterMap, AuthorizationRequest authorizationRequest) {
