@@ -12,10 +12,7 @@ import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
-import dev.rexijie.oauth.oauth2server.generators.RandomStringSecretGenerator;
-import dev.rexijie.oauth.oauth2server.generators.SecretGenerator;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
-import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.Signer;
 import org.slf4j.Logger;
@@ -53,7 +50,6 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
     private final OAuth2Properties properties;
     private final TokenService tokenService;
     private final Signer jwtSigner;
-    private final SecretGenerator secretGenerator = new RandomStringSecretGenerator();
     private final ThreadLocal<ObjectMapper> om = ThreadLocal.withInitial(ObjectMapper::new);
 
     public JwtGeneratingTokenEnhancer(OAuth2Properties properties,
@@ -64,6 +60,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
         this.jwtSigner = jwtSigner;
     }
 
+    // TODO - Add Refresh Tokens
     @Override
     public Mono<OAuth2Token> enhance(OAuth2AccessToken token, Authentication authentication) {
         if (authentication instanceof OAuth2Authentication oAuth2Authentication) {
@@ -142,21 +139,36 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
 
     private SignedJWT createToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
         String grantType = authentication.getStoredRequest().getGrantType();
-        JWTClaimsSet claimsSet = grantType.equals(CLIENT_CREDENTIALS) ?
-                createClientClaimSet(token, authentication) :
-                createUserClaimSet(token, authentication);
+        return grantType.equals(CLIENT_CREDENTIALS) ?
+                createToken(createHeader(Map.of()), createClientClaimSet(token, authentication)) :
+                createToken(createHeader(Map.of()), createUserClaimSet(token, authentication));
+    }
 
-        var header = createHeader(Map.of(
-                "jti", claimsSet.getJWTID(),
-                Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME));
-        LOG.debug("Successfully Enhanced authentication token");
+    private SignedJWT createToken(JWSHeader header, JWTClaimsSet claimsSet) {
         return new SignedJWT(header, claimsSet);
+    }
+
+    private JWTClaimsSet createRefreshClaims(OAuth2AccessToken token, OAuth2Authentication authentication) {
+        LOG.debug("Generating JWT Claims Set");
+        var tokenInfo = extractAdditionalInformationFromToken(token.getTokenValue());
+        var jti = getIdFromToken(token);
+        ClientDTO details = authentication.getDetails(ClientDTO.class);
+
+        return new JWTClaimsSet.Builder()
+                .jwtID(jti)
+                .issuer(properties.openId().issuer())
+                .subject(tokenInfo.get("username"))
+                .audience(authentication.getPrincipal().toString())
+                .notBeforeTime(Date.from(Instant.ofEpochSecond(authentication.getAuthenticationTime())))
+                .issueTime(Date.from(Instant.now()))
+                .expirationTime(secondsFromNow(details.getRefreshTokenValidity()))
+                .build();
     }
 
     private JWTClaimsSet createUserClaimSet(OAuth2AccessToken token, OAuth2Authentication authentication) {
         LOG.debug("Generating JWT Claims Set");
         var tokenInfo = extractAdditionalInformationFromToken(token.getTokenValue());
-        var jti = token.getTokenValue().substring(0, 32);
+        var jti = getIdFromToken(token);
         ClientDTO details = authentication.getDetails(ClientDTO.class);
 
         JWTClaimsSet userClaims = new JWTClaimsSet.Builder()
@@ -178,7 +190,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
 
     private JWTClaimsSet createClientClaimSet(OAuth2AccessToken token, OAuth2Authentication authentication) {
         var tokenInfo = extractAdditionalInformationFromToken(token.getTokenValue());
-        var jti = token.getTokenValue().substring(0, 32);
+        var jti = getIdFromToken(token);
 
 
         JWTClaimsSet clientClaims = new JWTClaimsSet.Builder()
@@ -195,7 +207,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
     private SignedJWT createApprovalToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
         AuthorizationRequest storedRequest = authentication.getAuthorizationRequest().storedRequest();
         var payload = new JWTClaimsSet.Builder()
-                .jwtID(secretGenerator.generate(24))
+                .jwtID(getIdFromToken(token))
                 .issuer(properties.openId().issuer())
                 .subject(authentication.getUserPrincipal().toString())
                 .audience(authentication.getPrincipal().toString())
@@ -206,8 +218,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 .notBeforeTime(Date.from(Instant.ofEpochSecond(authentication.getAuthenticationTime())))
                 .build();
         LOG.debug("Successfully Enhanced approval token");
-        return new SignedJWT(
-                createHeader(Map.of()),
+        return new SignedJWT(createHeader(Map.of()),
                 payload
         );
     }
@@ -243,5 +254,9 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
 
     private ObjectMapper getObjectMapper() {
         return om.get();
+    }
+
+    private String getIdFromToken(OAuth2Token token) {
+        return token.getTokenValue().substring(0, 32);
     }
 }
