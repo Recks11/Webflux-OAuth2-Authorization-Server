@@ -24,7 +24,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractOAuth2
     }
 
     @Override
-    public Mono<AuthorizationRequest> validateRequest(AuthorizationRequest request) {
+    public Mono<AuthorizationRequest> validateRequest(Authentication authentication, AuthorizationRequest request) {
         if (!AuthorizationGrantType.PASSWORD.equals(new AuthorizationGrantType(request.getGrantType())))
             return Mono.error(INVALID_GRANT_ERROR);
         return Mono.just(request);
@@ -33,7 +33,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractOAuth2
     @Override
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
         LOG.debug("Received request");
-        return validateRequest(authorizationRequest)
+        return validateRequest(authentication, authorizationRequest)
                 .flatMap(req -> authenticateUsernameAndPassword(req)
                         .doOnSuccess(oAuth2AuthorizationRequest ->
                                 LOG.debug("authenticate user {}", authorizationRequest.getAttribute(USERNAME_ATTRIBUTE)))

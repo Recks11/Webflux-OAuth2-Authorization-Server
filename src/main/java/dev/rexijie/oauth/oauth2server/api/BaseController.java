@@ -17,7 +17,7 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Component
-public class Endpoints {
+public class BaseController {
 
     private static final String OAUTH_BASE_PATH = "/oauth";
     private static final String OIDC_BASE = "/openid";

@@ -9,10 +9,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.proc.BadJWSException;
 import com.nimbusds.jose.proc.JWSVerifierFactory;
 import com.nimbusds.jose.produce.JWSSignerFactory;
-import com.nimbusds.jwt.JWT;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.PlainJWT;
-import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jwt.*;
 import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
@@ -73,15 +70,10 @@ public class NimbusdsJoseTokenSigner implements Signer {
     public Mono<JWT> deserialize(String serializedJwt) {
         return Mono.create(monoSink -> {
             try {
-                SignedJWT parsedToken = SignedJWT.parse(serializedJwt);
+                JWT parsedToken = JWTParser.parse(serializedJwt);
                 monoSink.success(parsedToken);
             } catch (ParseException exception) {
-                try {
-                    PlainJWT parse = PlainJWT.parse(serializedJwt);
-                    monoSink.success(parse);
-                } catch (ParseException exception1) {
-                    monoSink.error(new JwtException("invalid token", exception));
-                }
+                monoSink.error(new JwtException("invalid token", exception));
             }
         });
     }
@@ -101,16 +93,16 @@ public class NimbusdsJoseTokenSigner implements Signer {
     }
 
     @Override
-    public Mono<Void> verifyClaims(JWT signedJWT, OAuth2Authentication authentication) {
+    public Mono<Void> verifyClaims(JWTClaimsSet claimsSet, OAuth2Authentication authentication) {
         return Mono.create(monoSink -> {
             try {
                 var audience = authentication.getPrincipal().toString();
                 JWTClaimsSetVerifier<?> claimsSetVerifier = claimsVerifierFactory.getVerifier(audience,
                         properties.openId().issuer());
-                claimsSetVerifier.verify(signedJWT.getJWTClaimsSet(), null);
+                claimsSetVerifier.verify(claimsSet, null);
                 monoSink.success();
-            } catch (BadJWTException | ParseException e) {
-                monoSink.error(new JwtException("invalid jwt", e));
+            } catch (BadJWTException ex) {
+                monoSink.error(new JwtException("invalid jwt", ex));
             }
         });
 

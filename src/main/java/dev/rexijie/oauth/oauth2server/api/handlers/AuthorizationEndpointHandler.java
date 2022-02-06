@@ -38,6 +38,8 @@ import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.PASSWORD_ATTRIBU
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.util.UriUtils.modifyUri;
 import static org.springframework.security.oauth2.core.OAuth2ErrorCodes.*;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.CODE;
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.STATE;
 
 
 // Algorithm:
@@ -126,7 +128,7 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
 
     private Mono<ServerResponse> authorize(AuthorizationRequest authorizationRequest, ServerRequest request) {
         String responseType = authorizationRequest.getResponseType();
-        if (!responseType.equals("code")) return request.session()
+        if (!responseType.equals(CODE)) return request.session()
                 .doOnNext(WebSession::invalidate)
                 .flatMap(session -> ServerResponse.badRequest().build());
 
@@ -186,8 +188,8 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
                         .flatMap(authorizationCode -> request.session().flatMap(session -> {
                             String redirectUri = fullAuthentication.getStoredRequest().getRedirectUri();
                             URI codeUri = modifyUri(redirectUri)
-                                    .queryParam("code", authorizationCode.getCode())
-                                    .queryParamIfPresent("state", Optional.of(fullAuthentication.getStoredRequest().getState()))
+                                    .queryParam(CODE, authorizationCode.getCode())
+                                    .queryParamIfPresent(STATE, Optional.of(fullAuthentication.getStoredRequest().getState()))
                                     .build();
 
                             return session.invalidate()

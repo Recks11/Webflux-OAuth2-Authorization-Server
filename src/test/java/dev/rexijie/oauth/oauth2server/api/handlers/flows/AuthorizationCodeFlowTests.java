@@ -2,9 +2,10 @@ package dev.rexijie.oauth.oauth2server.api.handlers.flows;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.PlainHeader;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.PlainJWT;
+import com.nimbusds.jwt.SignedJWT;
 import dev.rexijie.oauth.oauth2server.api.OAuthTest;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
@@ -14,7 +15,6 @@ import dev.rexijie.oauth.oauth2server.auth.AuthorizationCodeWrapper;
 import dev.rexijie.oauth.oauth2server.auth.EncryptedCodeAuthorizationCodeWrapper;
 import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
-import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
 import dev.rexijie.oauth.oauth2server.services.DefaultReactiveAuthorizationCodeServices;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.Signer;
@@ -191,7 +191,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                         .getBytes(StandardCharsets.UTF_8)));
     }
 
-    private PlainJWT mockToken() {
+    private SignedJWT mockToken() {
         var client = ModelMocks.testClient();
         var user = ModelMocks.testUser();
         OAuth2Authentication authentication = ModelMocks.Authentication.createClientAuthentication(client);
@@ -206,11 +206,8 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                                 NONCE, "random_nonce_string")),
                 ModelMocks.Authentication.mockUserAuthentication(user)
         ));
-        return new PlainJWT(
-                new PlainHeader.Builder()
-                        .customParams(Map.of(
-                                Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME
-                        )).build(),
+        return new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.RS256).build(),
                 new JWTClaimsSet.Builder()
                         .subject(user.getUsername())
                         .jwtID("iqfbuhf89bo8fqwi9unf873fh8923")

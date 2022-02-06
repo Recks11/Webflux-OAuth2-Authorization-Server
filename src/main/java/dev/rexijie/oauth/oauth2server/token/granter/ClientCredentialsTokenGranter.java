@@ -23,7 +23,7 @@ public class ClientCredentialsTokenGranter extends AbstractOAuth2TokenGranter {
     }
 
     @Override
-    public Mono<AuthorizationRequest> validateRequest(AuthorizationRequest request) {
+    public Mono<AuthorizationRequest> validateRequest(Authentication authentication, AuthorizationRequest request) {
         if (!new AuthorizationGrantType(request.getGrantType()).equals(AuthorizationGrantType.CLIENT_CREDENTIALS))
             return Mono.error(INVALID_GRANT_ERROR);
         return Mono.just(request);
@@ -31,7 +31,7 @@ public class ClientCredentialsTokenGranter extends AbstractOAuth2TokenGranter {
 
     @Override
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
-        return validateRequest(authorizationRequest)
+        return validateRequest(authentication, authorizationRequest)
                 .map(validRequest -> createAuthenticationToken(authentication,
                         new OAuth2AuthorizationRequest(authorizationRequest, authentication)))
                 .flatMap(credentials -> getTokenServices().createAccessToken(credentials));

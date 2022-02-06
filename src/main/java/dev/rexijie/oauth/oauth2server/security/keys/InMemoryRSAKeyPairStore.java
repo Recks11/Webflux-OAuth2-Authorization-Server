@@ -1,5 +1,8 @@
 package dev.rexijie.oauth.oauth2server.security.keys;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.interfaces.RSAPrivateKey;
@@ -11,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.springframework.security.oauth2.jose.jws.JwsAlgorithms.RS256;
 
 public class InMemoryRSAKeyPairStore implements KeyPairStore<RSAPrivateKey, RSAPublicKey> {
+    private static final Logger LOG = LoggerFactory.getLogger(InMemoryRSAKeyPairStore.class);
     Map<String, KeyPairContainer> keyPairMap = new ConcurrentHashMap<>();
 
     public InMemoryRSAKeyPairStore(KeyPair keyPair) {

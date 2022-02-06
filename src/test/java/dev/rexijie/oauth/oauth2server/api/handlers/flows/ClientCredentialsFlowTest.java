@@ -10,9 +10,7 @@ import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterN
 
 public class ClientCredentialsFlowTest extends OAuthTest {
     @Override
-    public void setUp() {
-
-    }
+    public void setUp() { }
 
     @Test
     void canGrantTokenWithClientCredentials() {

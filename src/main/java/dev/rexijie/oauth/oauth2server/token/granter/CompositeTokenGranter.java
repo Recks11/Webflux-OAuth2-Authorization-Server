@@ -35,7 +35,7 @@ public class CompositeTokenGranter implements TokenGranter {
     }
 
     @Override
-    public Mono<AuthorizationRequest> validateRequest(AuthorizationRequest request) {
+    public Mono<AuthorizationRequest> validateRequest(Authentication authentication, AuthorizationRequest request) {
         if (request.getScope().isEmpty()) return Mono.error(INVALID_SCOPE_ERROR);
         if (request.getGrantType() == null) return Mono.error(INVALID_REQUEST_ERROR);
         return Mono.just(request);
@@ -43,7 +43,7 @@ public class CompositeTokenGranter implements TokenGranter {
 
     @Override
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
-        return validateRequest(authorizationRequest)
+        return validateRequest(authentication, authorizationRequest)
                 .flatMap(validReq -> {
                     var granter = getTokenGranterForRequest(tokenGranterMap, validReq);
                     return granter.grantToken(authentication, validReq);

@@ -24,8 +24,10 @@ import java.util.stream.Collectors;
 import static dev.rexijie.oauth.oauth2server.model.dto.ClientDTO.ClientMapper.toDto;
 
 public class ModelMocks {
+    public static final String TEST_CLIENT_ID = "test-client";
+    public static final String TEST_CLIENT_SECRET = "secret";
     public static Client testClient() {
-        return testClient("test-client", "secret");
+        return testClient(TEST_CLIENT_ID, TEST_CLIENT_SECRET);
     }
 
     public static Client testClient(String clientId, String secret) {
@@ -77,7 +79,7 @@ public class ModelMocks {
 
 
     public static Client getDefaultClient(String password) {
-        return ModelMocks.testClient("test-client", password);
+        return ModelMocks.testClient(TEST_CLIENT_ID, password);
     }
 
     public static User getDefaultUser(String password) {

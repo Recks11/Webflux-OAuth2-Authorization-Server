@@ -18,7 +18,7 @@ public class ImplicitTokenGranter extends AbstractOAuth2TokenGranter {
     }
 
     @Override
-    public Mono<AuthorizationRequest> validateRequest(AuthorizationRequest request) {
+    public Mono<AuthorizationRequest> validateRequest(Authentication authentication, AuthorizationRequest request) {
         if (!AuthorizationGrantType.IMPLICIT.equals(new AuthorizationGrantType(request.getGrantType())))
             throw Exceptions.propagate(INVALID_GRANT_ERROR);
         return Mono.just(request);
@@ -26,7 +26,7 @@ public class ImplicitTokenGranter extends AbstractOAuth2TokenGranter {
 
     @Override
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
-        return validateRequest(authorizationRequest)
+        return validateRequest(authentication, authorizationRequest)
                 .then(Mono.empty());
     }
 }

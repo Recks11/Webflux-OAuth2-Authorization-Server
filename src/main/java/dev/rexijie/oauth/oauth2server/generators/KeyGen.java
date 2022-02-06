@@ -1,12 +1,20 @@
 package dev.rexijie.oauth.oauth2server.generators;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 
 import java.security.*;
 
 public class KeyGen {
+    private static final Logger LOG = LoggerFactory.getLogger(KeyGen.class);
     public static final String KEY_TYPE = "RSA";
     public static KeyPair generateKeys() {
         try {
@@ -29,4 +37,29 @@ public class KeyGen {
             // or get from file system?
         }
     }
+
+    public static JWK generateRSAJWK() {
+        try {
+            return new RSAKeyGenerator(2048)
+                    .keyIDFromThumbprint(true)
+                    .keyUse(KeyUse.SIGNATURE)
+                    .generate();
+        } catch (JOSEException e) {
+            LOG.error("failed to generate RSA JWK", e);
+            throw Exceptions.propagate(e);
+        }
+    }
+
+    public static JWK generateECKey() {
+        try {
+            return new ECKeyGenerator(Curve.P_256)
+                    .keyIDFromThumbprint(true)
+                    .keyUse(KeyUse.SIGNATURE)
+                    .generate();
+        } catch (JOSEException e) {
+            LOG.error("failed to generate EC JWK", e);
+            throw Exceptions.propagate(e);
+        }
+    }
+
 }

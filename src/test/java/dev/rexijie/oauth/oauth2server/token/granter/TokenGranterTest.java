@@ -2,9 +2,14 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.PlainHeader;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
+import com.nimbusds.jwt.SignedJWT;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthorizationCodeWrapper;
@@ -22,7 +27,6 @@ import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.repository.AuthorizationCodeRepository;
 import dev.rexijie.oauth.oauth2server.repository.ClientRepository;
 import dev.rexijie.oauth.oauth2server.repository.UserRepository;
-import dev.rexijie.oauth.oauth2server.security.keys.InMemoryRSAKeyPairStore;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
 import dev.rexijie.oauth.oauth2server.services.DefaultReactiveAuthorizationCodeServices;
 import dev.rexijie.oauth.oauth2server.services.client.ClientService;
@@ -32,7 +36,7 @@ import dev.rexijie.oauth.oauth2server.services.token.DefaultTokenServices;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
 import dev.rexijie.oauth.oauth2server.services.user.DefaultReactiveUserDetailsService;
 import dev.rexijie.oauth.oauth2server.services.user.DefaultUserService;
-import dev.rexijie.oauth.oauth2server.token.NimbusdsJoseTokenSigner;
+import dev.rexijie.oauth.oauth2server.token.NimbusJOSETokenProcessor;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.Signer;
 import dev.rexijie.oauth.oauth2server.token.enhancer.TokenEnhancer;
@@ -49,6 +53,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.CLIENT_AUTHENTICATION_METHOD;
@@ -130,8 +135,13 @@ public abstract class TokenGranterTest {
     }
 
     protected Mono<String> getMockToken() {
-        Signer jwtSigner = new NimbusdsJoseTokenSigner(new InMemoryRSAKeyPairStore(KeyGen.generateRSAKeys())
-                , ServiceMocks.ConfigBeans.mockProperties());
+        var rsaKey = KeyGen.generateRSAJWK();
+        var ecKey = KeyGen.generateECKey();
+        Signer jwtSigner = new NimbusJOSETokenProcessor(
+                null,
+                new ImmutableJWKSet<>(new JWKSet(List.of(rsaKey, ecKey)))
+        );
+
         return jwtSigner.sign(createApprovalToken());
     }
 
@@ -147,7 +157,7 @@ public abstract class TokenGranterTest {
         return clientAuth;
     }
 
-    private PlainJWT createApprovalToken() {
+    private SignedJWT createApprovalToken() {
         var authentication = clientAuthentication();
         var payload = new JWTClaimsSet.Builder()
                 .jwtID(secretGenerator.generate(24))
@@ -164,11 +174,9 @@ public abstract class TokenGranterTest {
                 .expirationTime(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
                 .build();
 
-        var header = new PlainHeader.Builder()
-                .customParams(Map.of(Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME)).build();
-
-        return new PlainJWT(
-                header,
+        return new SignedJWT(
+                // TODO make dynamic
+                new JWSHeader.Builder(JWSAlgorithm.RS256).build(),
                 payload
         );
     }

@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 
 class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
 
-    TokenGranter tokenGranter;
+    private TokenGranter tokenGranter;
     @Mock ReactiveAuthorizationCodeServices authorizationCodeServices;
 
     @Override
@@ -29,7 +29,10 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
                 tokenServices,
                 authorizationCodeServices
         );
+    }
 
+    @Test
+    void grantToken() {
         when(clientRepository.findByClientId(testClient().clientId()))
                 .thenReturn(Mono.just(testClient()));
 
@@ -38,10 +41,7 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
 
         when(tokenEnhancer.enhance(any(), any(Authentication.class)))
                 .then(returnsMonoAtArg());
-    }
 
-    @Test
-    void grantToken() {
         String code = clientAuthentication().getStoredRequest().getAttribute("code");
         when(authorizationCodeServices.consumeAuthorizationCode(eq(code), any()))
                 .then(returnsMonoAtArg(1));
@@ -58,17 +58,15 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
     @Test
     void givenInvalidRequest_whenGenerateToken_thenError() {
         String code = clientAuthentication().getStoredRequest().getAttribute("code");
-        when(authorizationCodeServices.consumeAuthorizationCode(any(), any()))
-                .then(returnsMonoAtArg(1));
 
         var ar = new AuthorizationRequest(
-                        "invalid_grant",
-                        "code",
-                        "test-client",
-                        "http://localhost:8080/oauth/code",
-                        "read what?",
-                        "noNonce",
-                        "state_file");
+                "invalid_grant",
+                "code",
+                "test-client",
+                "http://localhost:8080/oauth/code",
+                "read write",
+                "noNonce",
+                "state_file");
 
         ar.setAttribute("code", "invalid_code");
         ar.setAttribute(USERNAME_ATTRIBUTE, "rexijie");
@@ -88,8 +86,8 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
                 "http://localhost:8080/oauth/code",
                 "read write",
                 "nonce",
-                "random_state"
-        );
+                "random_state");
+
         ar.setAttribute("code", "valid_code");
         ar.setAttribute(USERNAME_ATTRIBUTE, "rexijie");
         ar.setAttribute(PASSWORD_ATTRIBUTE, "password");

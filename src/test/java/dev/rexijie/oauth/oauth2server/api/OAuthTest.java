@@ -23,10 +23,7 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
 
-import java.util.Base64;
-
-import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultClient;
-import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.getDefaultUser;
+import static dev.rexijie.oauth.oauth2server.mocks.ModelMocks.*;
 import static dev.rexijie.oauth.oauth2server.utils.TestUtils.returnsMonoAtArg;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
@@ -50,7 +47,7 @@ public abstract class OAuthTest {
     @Autowired private ApplicationContext context;
     private WebTestClient webClient;
     private WebTestClient authWebClient;
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @MockBean protected UserRepository userRepository;
     @MockBean protected ClientRepository clientRepository;
@@ -63,19 +60,18 @@ public abstract class OAuthTest {
 
     @BeforeEach
     void initializeClient() {
+        var client = testClient();
         this.authWebClient = WebTestClient
                 .bindToApplicationContext(context)
                 .apply(springSecurity())
                 .configureClient()
-                .filter(basicAuthentication("test-client", "secret"))
+                .filter(basicAuthentication(client.clientId(), TEST_CLIENT_SECRET))
                 .build();
 
         this.webClient = WebTestClient.bindToApplicationContext(context)
                 .configureClient()
                 .build();
 
-        passwordEncoder = new BCryptPasswordEncoder();
-        var client = testClient();
         var user = testUser();
         when(clientRepository.findByClientId(client.clientId()))
                 .thenReturn(Mono.just(client));
@@ -108,12 +104,6 @@ public abstract class OAuthTest {
         return this.authWebClient;
     }
 
-    public String getBasicCredentials() {
-        return Base64.getEncoder().encodeToString(
-                "test-client:secret".getBytes()
-        );
-    }
-
     protected UriBuilder getUriBuilder() {
         var client = testClient();
         return new DefaultUriBuilderFactory().builder()
@@ -129,7 +119,7 @@ public abstract class OAuthTest {
     }
 
     private Client testClient() {
-        return getDefaultClient(passwordEncoder.encode("secret"));
+        return getDefaultClient(passwordEncoder.encode(TEST_CLIENT_SECRET));
     }
 
     private User testUser() {

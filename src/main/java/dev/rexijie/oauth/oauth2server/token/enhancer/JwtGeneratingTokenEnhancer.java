@@ -2,10 +2,12 @@ package dev.rexijie.oauth.oauth2server.token.enhancer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.PlainHeader;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.util.JSONObjectUtils;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.PlainJWT;
+import com.nimbusds.jwt.SignedJWT;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
@@ -16,7 +18,6 @@ import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import dev.rexijie.oauth.oauth2server.token.Signer;
-import dev.rexijie.oauth.oauth2server.util.JoseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -53,7 +54,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
     private final TokenService tokenService;
     private final Signer jwtSigner;
     private final SecretGenerator secretGenerator = new RandomStringSecretGenerator();
-    ThreadLocal<ObjectMapper> om = ThreadLocal.withInitial(ObjectMapper::new);
+    private final ThreadLocal<ObjectMapper> om = ThreadLocal.withInitial(ObjectMapper::new);
 
     public JwtGeneratingTokenEnhancer(OAuth2Properties properties,
                                       TokenService tokenService,
@@ -67,7 +68,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
     public Mono<OAuth2Token> enhance(OAuth2AccessToken token, Authentication authentication) {
         if (authentication instanceof OAuth2Authentication oAuth2Authentication) {
             try {
-                final PlainJWT jwtToken = switch (oAuth2Authentication.getAuthenticationStage()) {
+                final SignedJWT jwtToken = switch (oAuth2Authentication.getAuthenticationStage()) {
                     case COMPLETE -> createToken(token, oAuth2Authentication);
                     case PENDING_APPROVAL -> createApprovalToken(token, oAuth2Authentication);
                     default -> throw new OAuth2AuthenticationException("Invalid Authentication");
@@ -103,10 +104,9 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
     @Override
     public Mono<OAuth2Authentication> readAuthentication(OAuth2Token auth2Token, OAuth2Authentication authentication) {
         return jwtSigner.deserialize(auth2Token.getTokenValue())
-                .flatMap(signedJWT -> jwtSigner.verifyClaims(signedJWT, authentication)
-                        .then(JoseUtils.extractClaimsSet(signedJWT))
-                ).map(jwtClaimsSet -> {
+                .map(jwt -> {
                     try {
+                        var jwtClaimsSet = jwt.getJWTClaimsSet();
                         OAuth2Authentication auth = OAuth2Authentication.from(authentication);
                         if (!jwtClaimsSet.getAudience().contains(authentication.getPrincipal().toString()))
                             throw new OAuth2AuthorizationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT),
@@ -140,7 +140,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 authToken.getScopes());
     }
 
-    private PlainJWT createToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
+    private SignedJWT createToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
         String grantType = authentication.getStoredRequest().getGrantType();
         JWTClaimsSet claimsSet = grantType.equals(CLIENT_CREDENTIALS) ?
                 createClientClaimSet(token, authentication) :
@@ -150,7 +150,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 "jti", claimsSet.getJWTID(),
                 Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME));
         LOG.debug("Successfully Enhanced authentication token");
-        return new PlainJWT(header, claimsSet);
+        return new SignedJWT(header, claimsSet);
     }
 
     private JWTClaimsSet createUserClaimSet(OAuth2AccessToken token, OAuth2Authentication authentication) {
@@ -192,7 +192,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
         return addFinalClaims(clientClaims, authentication);
     }
 
-    private PlainJWT createApprovalToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
+    private SignedJWT createApprovalToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
         AuthorizationRequest storedRequest = authentication.getAuthorizationRequest().storedRequest();
         var payload = new JWTClaimsSet.Builder()
                 .jwtID(secretGenerator.generate(24))
@@ -206,8 +206,8 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 .notBeforeTime(Date.from(Instant.ofEpochSecond(authentication.getAuthenticationTime())))
                 .build();
         LOG.debug("Successfully Enhanced approval token");
-        return new PlainJWT(
-                createHeader(Map.of(Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME)),
+        return new SignedJWT(
+                createHeader(Map.of()),
                 payload
         );
     }
@@ -221,8 +221,10 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 .build();
     }
 
-    private PlainHeader createHeader(Map<String, Object> otherParams) {
-        return new PlainHeader.Builder() // set the key to use while signing
+    private JWSHeader createHeader(Map<String, Object> otherParams) {
+        // TODO - change algorithm based on parameter
+        return new JWSHeader.Builder(JWSAlgorithm.RS256) // set the key to use while signing
+                .type(JOSEObjectType.JWT)
                 .customParams(otherParams)
                 .build();
     }

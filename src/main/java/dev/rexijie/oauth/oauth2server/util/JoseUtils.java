@@ -30,7 +30,7 @@ public class JoseUtils {
                 Objects.requireNonNull(token.getExpiresAt()).
                         minusSeconds(Objects.requireNonNull(token.getIssuedAt()).
                                 getEpochSecond()).getEpochSecond(),
-                new Scope()
+                new Scope(token.getScopes().toArray(new String[]{}))
         );
     }
 

@@ -5,7 +5,7 @@ import org.mockito.stubbing.Answer;
 import reactor.core.publisher.Mono;
 
 public class TestUtils {
-    public static Answer<?> returnsMonoAtArg() {
+    public static Answer<Mono<?>> returnsMonoAtArg() {
         return invocation -> {
             ReturnsArgumentAt returnsArgumentAt = new ReturnsArgumentAt(0);
 //            returnsArgumentAt.validateFor(invocation);
@@ -13,7 +13,7 @@ public class TestUtils {
             return Mono.just(answer);
         };
     }
-    public static Answer<?> returnsMonoAtArg(int position) {
+    public static Answer<Mono<?>> returnsMonoAtArg(int position) {
         return invocation -> {
             ReturnsArgumentAt returnsArgumentAt = new ReturnsArgumentAt(position);
 //            returnsArgumentAt.validateFor(invocation);
@@ -21,4 +21,6 @@ public class TestUtils {
             return Mono.just(answer);
         };
     }
+
+
 }

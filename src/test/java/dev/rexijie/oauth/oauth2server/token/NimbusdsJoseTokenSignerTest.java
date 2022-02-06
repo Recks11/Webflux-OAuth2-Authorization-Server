@@ -1,10 +1,6 @@
 package dev.rexijie.oauth.oauth2server.token;
 
-import com.nimbusds.jose.PlainHeader;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.PlainJWT;
 import dev.rexijie.oauth.oauth2server.generators.KeyGen;
-import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
 import dev.rexijie.oauth.oauth2server.mocks.ServiceMocks;
 import dev.rexijie.oauth.oauth2server.security.keys.InMemoryRSAKeyPairStore;
 import dev.rexijie.oauth.oauth2server.security.keys.KeyPairStore;
@@ -17,31 +13,13 @@ import reactor.test.StepVerifier;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 
+import static dev.rexijie.oauth.oauth2server.mocks.TokenMocks.getPlainToken;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class NimbusdsJoseTokenSignerTest {
 
     private Signer signer;
-
-    private PlainJWT getToken() {
-        return new PlainJWT(
-                new PlainHeader.Builder()
-                        .customParam(Signer.SIGNING_KEY_ID, KeyPairStore.DEFAULT_KEY_NAME)
-                        .build(),
-                new JWTClaimsSet.Builder()
-                        .subject("rexijie")
-                        .issuer(ServiceMocks.ConfigBeans.mockProperties().openId().issuer())
-                        .audience(ModelMocks.testClient().clientId())
-                        .issueTime(Date.from(Instant.now()))
-                        .expirationTime(java.sql.Date.from(Instant.now().plus(10, ChronoUnit.SECONDS)))
-                        .build()
-
-        );
-    }
 
     @BeforeEach
     void setup() {
@@ -51,7 +29,7 @@ class NimbusdsJoseTokenSignerTest {
 
     @Test
     void canSignTokens() {
-        var token = getToken();
+        var token = getPlainToken();
         Mono<String> sign = signer.sign(token);
         StepVerifier.create(sign)
                 .consumeNextWith(tk -> assertThat(tk).isNotNull().containsPattern("(^[\\w-]*\\.[\\w-]*\\.[\\w-]*$)"))
@@ -60,7 +38,7 @@ class NimbusdsJoseTokenSignerTest {
 
     @Test
     void canVerifySignedTokens() {
-        var token = getToken();
+        var token = getPlainToken();
         Mono<Boolean> verify = signer.sign(token)
                 .flatMap(signer::verify);
         StepVerifier.create(verify)
@@ -71,7 +49,7 @@ class NimbusdsJoseTokenSignerTest {
 
     @Test
     void whenVerifyTokensWithBadKeys_thenError() {
-        var token = getToken();
+        var token = getPlainToken();
         Mono<Boolean> verify = signer.sign(token)
                 .flatMap(s -> {
                     setup();
@@ -85,7 +63,7 @@ class NimbusdsJoseTokenSignerTest {
 
     @Test
     void whenVerifyTokensWithBadToken_thenError() {
-        var token = getToken();
+        var token = getPlainToken();
         Mono<Boolean> verify = signer.sign(token)
                 .flatMap(s -> signer.verify(s.substring(2, s.length() - 5)));
 
