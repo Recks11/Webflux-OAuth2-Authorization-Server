@@ -46,7 +46,9 @@ public class ReactiveClientAuthenticationManager extends AbstractUserDetailsReac
         String tokenEndpointAuthenticationMethod = clientUserDetails.clientData().tokenEndpointAuthMethod();
         if (tokenEndpointAuthenticationMethod == null) tokenEndpointAuthenticationMethod = "none";
 
-        auth.getStoredRequest().setAttribute(CLIENT_AUTHENTICATION_METHOD, tokenEndpointAuthenticationMethod);
+        if (auth.getAuthorizationRequest() != null) {
+            auth.getStoredRequest().setAttribute(CLIENT_AUTHENTICATION_METHOD, tokenEndpointAuthenticationMethod);
+        }
         return auth;
     }
 
