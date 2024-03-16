@@ -30,7 +30,8 @@ public class CompositeTokenGranter implements TokenGranter {
         this.tokenGranterMap = Collections.synchronizedMap(Map.of(
                 AuthorizationGrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenServices, userAuthenticationManager),
                 AuthorizationGrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenServices, authorizationCodeServices),
-                AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenServices, clientAuthenticationManager)
+                AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenServices, clientAuthenticationManager),
+                AuthorizationGrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenServices)
         ));
     }
 
