@@ -51,7 +51,8 @@ public class WebSecurityConfig {
                 .httpBasic().disable()
                 .csrf().disable();
         http
-                .securityMatcher(new PathPatternParserServerWebExchangeMatcher("%s/**".formatted(oAuth2Properties.server().basePath().toLowerCase())))
+                .securityMatcher(new PathPatternParserServerWebExchangeMatcher("%s/**".
+                        formatted(oAuth2Properties.server().basePath().toLowerCase())))
                 .authorizeExchange(exchanges ->
                         exchanges
                                 .anyExchange()

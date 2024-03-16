@@ -100,6 +100,7 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
                                     AuthorizationRequest.AUTHORIZATION_SESSION_ATTRIBUTE, authorizationRequest);
                             return redirectTo(serverRequest, "/login");
                         }))
+                .publishOn(Schedulers.boundedElastic())
                 .doOnError(throwable -> {
                     serverRequest.session().flatMap(WebSession::invalidate).subscribe();
                     LOG.error("error initialising authorization");

@@ -64,15 +64,17 @@ public class BaseController {
         return route()
                 .path("/", authorization -> authorization
                         .GET("login", loginAndApprovalHandler::indexPage)
-                        .GET("approve", loginAndApprovalHandler::indexPage)
+                        .GET("approve", loginAndApprovalHandler::approvalPage)
                 ).build();
     }
 
     RouterFunction<ServerResponse> oAuthAuthorizationEndpoints(AuthorizationEndpointHandler authorizationEndpointHandler) {
         return route()
                 .path(OAUTH_BASE_PATH, home -> home
-                        .GET("/authorize", authorizationEndpointHandler::initiateAuthorization)
-                        .POST("/authorize", authorizationEndpointHandler::authorizeRequest)
+                        .path("authorize", authorize -> authorize
+                                        .GET(authorizationEndpointHandler::initiateAuthorization)
+                                        .POST(authorizationEndpointHandler::authorizeRequest)
+                        )
                         .path("/approve", approve -> approve
                                 .GET( authorizationEndpointHandler::approvalPage)
                                 .POST( authorizationEndpointHandler::approve)
