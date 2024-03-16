@@ -1,6 +1,7 @@
 package dev.rexijie.oauth.oauth2server.api;
 
 import dev.rexijie.oauth.oauth2server.api.handlers.*;
+import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.CacheControl;
@@ -19,11 +20,18 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 @Component
 public class BaseController {
 
-    private static final String OAUTH_BASE_PATH = "/oauth";
+    private final String OAUTH_BASE_PATH;
     private static final String OIDC_BASE = "/openid";
     private static final String API_BASE = "/api";
     private static final String CLIENT_API_BASE = "/clients";
     private static final String USER_API_BASE = "/users";
+
+    private final OAuth2Properties oauth2Props;
+
+    public BaseController(OAuth2Properties oAuth2Properties) {
+        this.oauth2Props = oAuth2Properties;
+        this.OAUTH_BASE_PATH = oauth2Props.server().basePath();
+    }
 
     @Bean
     RouterFunction<ServerResponse> appRoutes(LandingHandler landingHandler,

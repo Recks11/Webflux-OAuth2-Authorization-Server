@@ -3,6 +3,7 @@ package dev.rexijie.oauth.oauth2server.api.handlers;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
+import dev.rexijie.oauth.oauth2server.config.OAuth2Properties;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.services.ReactiveAuthorizationCodeServices;
@@ -59,11 +60,13 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
     private Resource index;
     private final ReactiveAuthorizationCodeServices authorizationCodeServices;
     private final ReactiveAuthenticationManager authenticationManager;
+    private final OAuth2Properties oAuth2Properties;
 
     public AuthorizationEndpointHandler(ReactiveAuthorizationCodeServices reactiveAuthorizationCodeServices,
-                                        @Qualifier("userAuthenticationManager") ReactiveAuthenticationManager authenticationManager) {
+                                        @Qualifier("userAuthenticationManager") ReactiveAuthenticationManager authenticationManager, OAuth2Properties oAuth2Properties) {
         this.authorizationCodeServices = reactiveAuthorizationCodeServices;
         this.authenticationManager = authenticationManager;
+        this.oAuth2Properties = oAuth2Properties;
     }
 
     private AuthorizationRequest validateAuthorizationRequest(Principal principal,
@@ -146,7 +149,7 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
                             return session.changeSessionId()
                                     .thenReturn(session);
                         })
-                ).flatMap(s -> redirectTo(request, "/oauth/approve"));
+                ).flatMap(s -> redirectTo(request, "%s/approve".formatted(oAuth2Properties.server().basePath())));
     }
 
     private Mono<Authentication> authenticateRequest(AuthorizationRequest authorizationRequest) {

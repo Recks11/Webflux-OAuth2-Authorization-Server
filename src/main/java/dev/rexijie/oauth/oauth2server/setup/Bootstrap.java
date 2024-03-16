@@ -65,7 +65,7 @@ public class Bootstrap implements ApplicationListener<ApplicationStartedEvent> {
                 Set.of("read", "write"),
                 Set.of("OAuthServer"),
                 Set.of("authorization_code", "implicit"),
-                Set.of("http://localhost:8081/oauth/code"),
+                Set.of("http://localhost:8008/login/oauth2/code/"),
                 Set.of("USER", "ADMIN"),
                 900,
                 3600,

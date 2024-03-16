@@ -46,7 +46,8 @@ public class ServiceMocks {
                             "test-server",
                             "test-secret",
                             2010,
-                            true
+                            true,
+                            "/oauth"
                     ),
                     new OAuth2Properties.OidcProperties(
                             "http://localhost:8010",

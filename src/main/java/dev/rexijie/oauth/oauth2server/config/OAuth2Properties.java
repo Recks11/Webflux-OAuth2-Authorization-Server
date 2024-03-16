@@ -17,10 +17,11 @@ public record OAuth2Properties(OAuth2ServerProperties server,
     /**
      * OAuth2 Server Properties
      */
-    public static record OAuth2ServerProperties(String resourceId,
-                                                String secret,
-                                                int randomInt,
-                                                boolean implicitEnabled) {
+    public record OAuth2ServerProperties(String resourceId,
+                                         String secret,
+                                         int randomInt,
+                                         boolean implicitEnabled,
+                                         String basePath) {
     }
 
 
@@ -28,28 +29,28 @@ public record OAuth2Properties(OAuth2ServerProperties server,
      * OAuth2 OpenIDConnect Properties from property source
      */
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static record OidcProperties(@JsonIgnore
+    public record OidcProperties(@JsonIgnore
                                         String baseUri,
-                                        @JsonIgnore
+                                 @JsonIgnore
                                         String oauthEndpoint,
-                                        String issuer,
-                                        String tokenEndpoint,
-                                        String tokenKeyEndpoint,
-                                        String authorizationEndpoint,
-                                        String checkTokenEndpoint,
-                                        String userinfoEndpoint,
-                                        String introspectionEndpoint,
-                                        String jwksUri,
-                                        String revocationEndpoint,
-                                        Set<String> userinfoSigningAlgSupported,
-                                        Set<String> idTokenSigningAlgValuesSupported,
-                                        @JsonProperty("token_endpoint_auth_signing_alg_values_supported")
+                                 String issuer,
+                                 String tokenEndpoint,
+                                 String tokenKeyEndpoint,
+                                 String authorizationEndpoint,
+                                 String checkTokenEndpoint,
+                                 String userinfoEndpoint,
+                                 String introspectionEndpoint,
+                                 String jwksUri,
+                                 String revocationEndpoint,
+                                 Set<String> userinfoSigningAlgSupported,
+                                 Set<String> idTokenSigningAlgValuesSupported,
+                                 @JsonProperty("token_endpoint_auth_signing_alg_values_supported")
                                         Set<String> tokenEndpointAuthSigningAlgorithmsSupported,
-                                        Set<String> scopesSupported,
-                                        Set<String> subjectTypesSupported,
-                                        Set<String> responseTypesSupported,
-                                        Set<String> claimsSupported,
-                                        Set<String> grantTypesSupported,
-                                        Set<String> tokenEndpointAuthMethodsSupported) {
+                                 Set<String> scopesSupported,
+                                 Set<String> subjectTypesSupported,
+                                 Set<String> responseTypesSupported,
+                                 Set<String> claimsSupported,
+                                 Set<String> grantTypesSupported,
+                                 Set<String> tokenEndpointAuthMethodsSupported) {
     }
 }

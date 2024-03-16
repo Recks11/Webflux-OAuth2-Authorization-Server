@@ -1,12 +1,13 @@
 oauth2:
   server:
-    resourceid: ${SERVER_RESOURCE_ID}
+    resource-id: ${SERVER_RESOURCE_ID}
     implicit-enabled: true
     random-int: 20889
     secret: honesty
+    base-path: /oauth
   openid:
     baseUri: ${SERVER_URL:http://localhost:8080}
-    oauthEndpoint: ${oauth2.openid.baseUri}/oauth
+    oauthEndpoint: ${oauth2.openid.baseUri}/${oauth2.server.base-path}
     issuer: ${oauth2.openid.baseUri}/openid
     tokenEndpoint: ${oauth2.openid.oauthEndpoint}/token
     tokenKeyEndpoint: ${oauth2.openid.oauthEndpoint}/token_key

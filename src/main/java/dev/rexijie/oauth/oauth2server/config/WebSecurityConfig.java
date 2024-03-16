@@ -30,13 +30,16 @@ public class WebSecurityConfig {
     private final ClientRepository clientRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OAuth2Properties oAuth2Properties;
 
     public WebSecurityConfig(UserRepository userRepository,
                              ClientRepository clientRepository,
-                             PasswordEncoder passwordEncoder) {
+                             PasswordEncoder passwordEncoder,
+                             OAuth2Properties oAuth2Properties) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.clientRepository = clientRepository;
+        this.oAuth2Properties = oAuth2Properties;
     }
 
     @Bean
@@ -48,7 +51,7 @@ public class WebSecurityConfig {
                 .httpBasic().disable()
                 .csrf().disable();
         http
-                .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/oauth/**"))
+                .securityMatcher(new PathPatternParserServerWebExchangeMatcher("%s/**".formatted(oAuth2Properties.server().basePath().toLowerCase())))
                 .authorizeExchange(exchanges ->
                         exchanges
                                 .anyExchange()
