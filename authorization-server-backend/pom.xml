@@ -10,7 +10,7 @@
     <artifactId>authorization-server-backend</artifactId>
     <version>0.0.1</version>
     <packaging>jar</packaging>
-    <name>OAuth2-Server</name>
+    <name>authorization-server-backend</name>
     <description>Authentication Server that supports OpenID Connect</description>
     <url>http://maven.apache.org</url>
 
@@ -151,6 +151,37 @@
                             <goal>build-image</goal>
                         </goals>
                         <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy static assets</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>src/main/resources/static</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>${project.parent.basedir}/authorization-server-ui/target/dist</directory>
+                                    <includes>
+                                        <include>css/</include>
+                                        <include>js/</include>
+                                        <include>img/</include>
+                                        <include>fonts/</include>
+                                        <include>favicon.ico</include>
+                                        <include>manifest.json</include>
+                                        <include>robots.txt</include>
+                                        <include>index.html</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
