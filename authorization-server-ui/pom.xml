@@ -1,0 +1,92 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>dev.rexijie.oauth</groupId>
+        <artifactId>oauth2-server</artifactId>
+        <version>0.1.1</version>
+    </parent>
+
+    <groupId>org.example</groupId>
+    <artifactId>authorization-server-ui</artifactId>
+    <packaging>jar</packaging>
+
+    <name>authorization-server-ui</name>
+    <url>https://maven.apache.org</url>
+
+    <properties>
+        <frontend-maven-plugin-version>1.10.0</frontend-maven-plugin-version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend-maven-plugin-version}</version>
+                <executions>
+                    <!-- Install node and npm version to run node scripts -->
+                    <execution>
+                        <id>install node and yarn</id>
+                        <goals>
+                            <goal>install-node-and-yarn</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>v18.15.0</nodeVersion>
+                            <yarnVersion>v1.22.4</yarnVersion>
+                        </configuration>
+                    </execution>
+
+                    <!-- Install dependencies -->
+                    <execution>
+                        <id>yarn install</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- run unit tests -->
+                    <execution>
+                        <id>yarn test:unit</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <arguments>test:unit</arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- build vue app -->
+                    <execution>
+                        <id>yarn build</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- clean project -->
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>dist</directory>
+                        </fileset>
+                        <fileset>
+                            <directory>dist_electron</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
