@@ -98,7 +98,7 @@ public class AuthorizationEndpointHandler extends OAuthEndpointHandler {
                             LOG.info("started session: {}", session.getId());
                             session.getAttributes().put(
                                     AuthorizationRequest.AUTHORIZATION_SESSION_ATTRIBUTE, authorizationRequest);
-                            return redirectTo(serverRequest, "/login");
+                            return ServerResponse.ok().contentType(MediaType.TEXT_HTML).bodyValue(index);
                         }))
                 .publishOn(Schedulers.boundedElastic())
                 .doOnError(throwable -> {

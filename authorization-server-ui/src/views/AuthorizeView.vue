@@ -17,7 +17,7 @@ const authentication = reactive({
 const route = useRoute()
 
 onMounted(() => {
-  initAuthorization()
+  // initAuthorization()
 })
 
 function initAuthorization() {
@@ -56,7 +56,7 @@ function authorize() {
 
 <template>
   <div class="form-container">
-    <BaseForm class="form" @submit.prevent="authorize()" method="post">
+    <BaseForm class="form" :action="route.fullPath" method="post">
       <h1 class="form-header header">AUTHORIZE</h1>
 
       <div class="form-row">

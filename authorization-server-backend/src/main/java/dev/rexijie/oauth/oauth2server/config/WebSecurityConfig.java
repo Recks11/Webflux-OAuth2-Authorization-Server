@@ -52,7 +52,7 @@ public class WebSecurityConfig {
                 .csrf().disable();
         http
                 .securityMatcher(new PathPatternParserServerWebExchangeMatcher("%s/**".
-                        formatted(oAuth2Properties.server().basePath().toLowerCase())))
+                        formatted(oAuth2Properties.server().basePath().toLowerCase()))) //oauth2
                 .authorizeExchange(exchanges ->
                         exchanges
                                 .anyExchange()

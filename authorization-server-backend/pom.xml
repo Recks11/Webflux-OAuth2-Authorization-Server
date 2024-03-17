@@ -164,19 +164,33 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>src/main/resources/static</outputDirectory>
+                            <outputDirectory>src/main/resources</outputDirectory>
                             <overwrite>true</overwrite>
                             <resources>
                                 <resource>
                                     <directory>${project.parent.basedir}/authorization-server-ui/target/dist</directory>
                                     <includes>
-                                        <include>css/</include>
-                                        <include>js/</include>
-                                        <include>img/</include>
-                                        <include>fonts/</include>
+                                        <include>assets/</include>
+                                        <include>static/</include>
                                         <include>favicon.ico</include>
-                                        <include>manifest.json</include>
-                                        <include>robots.txt</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>Copy Index HTML</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>src/main/resources/templates</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>${project.parent.basedir}/authorization-server-ui/target/dist</directory>
+                                    <includes>
                                         <include>index.html</include>
                                     </includes>
                                 </resource>

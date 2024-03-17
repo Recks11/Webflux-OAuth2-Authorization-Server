@@ -17,18 +17,18 @@ const router = createRouter({
       component: LoginView
     },
     {
-      path: '/authorize',
+      path: '/oauth2/authorize',
       name: 'Authorize',
       component: AuthorizeView
     },
     {
-      path: '/approve',
+      path: '/oauth2/approve',
       name: 'Approve',
       component: ApproveView
     },
     {
-      path: '',
-      redirect: () => '/login'
+      path: '/:pathMatch(.*)*',
+      redirect: '/login'
     }
   ]
 })

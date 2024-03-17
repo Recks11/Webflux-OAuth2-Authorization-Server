@@ -13,7 +13,7 @@ const scopes = computed(() => {
 </script>
 
 <template>
-  <BaseForm>
+  <BaseForm :action="route.fullPath">
     <h1 class="form-header">Approve Access</h1>
     <div class="form-row">
       <p class="approval-text"><strong> {{ authorizeState.client_id }} </strong> needs permission to access your

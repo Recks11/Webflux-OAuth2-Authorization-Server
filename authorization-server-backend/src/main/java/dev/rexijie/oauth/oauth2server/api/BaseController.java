@@ -52,12 +52,20 @@ public class BaseController {
     }
 
     RouterFunction<ServerResponse> staticResources() {
-        return resources("/archive/static/**", new ClassPathResource("/archive/static/"))
+        return resources("/static/**", new ClassPathResource("/static/"))
                 .filter((request, next) -> {
                     var headers = request.exchange().getResponse().getHeaders();
                     headers.setCacheControl(CacheControl.maxAge(10, TimeUnit.MINUTES));
                     return next.handle(request);
-                });
+                })
+                .and(
+                        resources("/assets/**", new ClassPathResource("/assets/"))
+                                .filter((request, next) -> {
+                                    var headers = request.exchange().getResponse().getHeaders();
+                                    headers.setCacheControl(CacheControl.maxAge(10, TimeUnit.MINUTES));
+                                    return next.handle(request);
+                                })
+                );
     }
 
     RouterFunction<ServerResponse> loginPage(LoginAndApprovalHandler loginAndApprovalHandler) {
@@ -72,12 +80,12 @@ public class BaseController {
         return route()
                 .path(OAUTH_BASE_PATH, home -> home
                         .path("authorize", authorize -> authorize
-                                        .GET(authorizationEndpointHandler::initiateAuthorization)
-                                        .POST(authorizationEndpointHandler::authorizeRequest)
+                                .GET(authorizationEndpointHandler::initiateAuthorization)
+                                .POST(authorizationEndpointHandler::authorizeRequest)
                         )
                         .path("/approve", approve -> approve
-                                .GET( authorizationEndpointHandler::approvalPage)
-                                .POST( authorizationEndpointHandler::approve)
+                                .GET(authorizationEndpointHandler::approvalPage)
+                                .POST(authorizationEndpointHandler::approve)
                         )
                 )
                 .build();
@@ -101,8 +109,8 @@ public class BaseController {
     RouterFunction<ServerResponse> oidcEndpoint(OpenIdConnectHandler oidcHandler) {
         return route()
                 .path(OIDC_BASE, home -> home
-                        .GET(path("/.well-known/openid-configuration") ,oidcHandler::getOpenIdProperties)
-                        .GET(path("/.well-known/jwks.json") ,oidcHandler::getJwkSet)
+                        .GET(path("/.well-known/openid-configuration"), oidcHandler::getOpenIdProperties)
+                        .GET(path("/.well-known/jwks.json"), oidcHandler::getJwkSet)
                 )
                 .build();
     }
@@ -112,12 +120,12 @@ public class BaseController {
                                                 UserEndpointHandler userHandler) {
         return route()
                 .path(API_BASE, auth -> auth
-                        .GET(path(""), landingHandler::homePage)
+                        .GET(landingHandler::homePage)
                         .path(CLIENT_API_BASE, clients -> clients
-                                .POST(path(""), clientsHandler::createClient)
+                                .POST(clientsHandler::createClient)
                         )
                         .path(USER_API_BASE, users -> users
-                                .POST(path(""), userHandler::saveUser)
+                                .POST(userHandler::saveUser)
                                 .GET("/{username}", userHandler::findUser)
                         )
                 ).build();

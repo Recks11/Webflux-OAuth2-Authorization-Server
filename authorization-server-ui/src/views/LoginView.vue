@@ -29,7 +29,7 @@ function authorize() {
 
 <template>
   <div class="form-container">
-    <BaseForm class="form" :action.prevent="authorize" method="post">
+    <BaseForm class="form" :action.prevent="route.fullPath" method="post">
       <h1 class="form-header header">LOG IN</h1>
 
       <div class="form-row">

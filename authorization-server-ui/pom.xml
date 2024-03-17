@@ -7,7 +7,6 @@
         <version>0.1.1</version>
     </parent>
 
-    <groupId>dev.rexijie.oauth</groupId>
     <artifactId>authorization-server-ui</artifactId>
     <packaging>jar</packaging>
 
@@ -15,7 +14,7 @@
     <url>https://maven.apache.org</url>
 
     <properties>
-        <frontend-maven-plugin-version>1.10.0</frontend-maven-plugin-version>
+        <frontend-maven-plugin-version>1.15.0</frontend-maven-plugin-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <build>
@@ -38,15 +37,16 @@
                     </execution>
 
                     <!-- Install dependencies -->
-                    <execution>
-                        <id>yarn install</id>
-                        <goals>
-                            <goal>yarn</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>install</arguments>
-                        </configuration>
-                    </execution>
+<!--                    <execution>-->
+<!--                        <id>npm install</id>-->
+<!--                        <goals>-->
+<!--                            <goal>npm</goal>-->
+<!--                        </goals>-->
+<!--                        <phase>generate-resources</phase>-->
+<!--                        <configuration>-->
+<!--                            <arguments>install</arguments>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
 
                     <!-- run unit tests -->
                     <execution>
@@ -66,6 +66,7 @@
                         <goals>
                             <goal>yarn</goal>
                         </goals>
+                        <phase>compile</phase>
                         <configuration>
                             <arguments>build</arguments>
                         </configuration>
