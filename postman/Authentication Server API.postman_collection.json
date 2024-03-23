@@ -1,0 +1,1715 @@
+{
+	"info": {
+		"_postman_id": "a45000b7-166f-48f4-88df-1291495d0696",
+		"name": "Authentication Server API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12171037"
+	},
+	"item": [
+		{
+			"name": "resource owner password credentials",
+			"item": [
+				{
+					"name": "get_token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var token = pm.response.json();",
+									"",
+									"pm.collectionVariables.set(\"dev.accessToken\", token['access_token'])",
+									"pm.collectionVariables.set(\"dev.refreshToken\", token['refresh_token'])"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "secret",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "test-client",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic bWFuYWdlbWVudC1hcHA6c2VjcmV0",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "rexijie",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "read",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dev.baseURL}}/oauth2/token",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"oauth2",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "authorization_code flow",
+			"item": [
+				{
+					"name": "1 authorization login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const $ = cheerio.load(pm.response.text());",
+									"const formAction = $('.form').attr('action');",
+									"const csrfToken = $('[name=_csrf]').attr('value');",
+									"",
+									"const cookieHeaders = pm.response.headers.filter((header) => header.key === 'Set-Cookie')",
+									"  .map((header) => `${header.value.split(';')[0].trim()}`)",
+									"  .join('; ');",
+									"const authRequest = pm.request.url.toString();",
+									"",
+									"pm.collectionVariables.set('dev.authorizeFormAction', pm.request.url.getPathWithQuery());",
+									"if (cookieHeaders.length > 2) {",
+									"pm.collectionVariables.set('dev.authCookie', cookieHeaders);",
+									"}",
+									"pm.collectionVariables.set('dev.authRequest', authRequest);",
+									"pm.collectionVariables.set('dev.csrf', csrfToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableCookies": true,
+						"followRedirects": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "secret",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "test-client",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "{{dev.authCookie}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{dev.baseURL}}/oauth2/authorize?grant_type=authorization_code&response_type=code&redirect_uri=http://localhost:8008/login/oauth2/code/&client_id=management-app&scope=read write openid profile email&state=random_string&nonce=randopn_nonce_string",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"oauth2",
+								"authorize"
+							],
+							"query": [
+								{
+									"key": "grant_type",
+									"value": "authorization_code"
+								},
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:8008/login/oauth2/code/"
+								},
+								{
+									"key": "client_id",
+									"value": "management-app"
+								},
+								{
+									"key": "scope",
+									"value": "read write openid profile email"
+								},
+								{
+									"key": "state",
+									"value": "random_string"
+								},
+								{
+									"key": "nonce",
+									"value": "randopn_nonce_string"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2 authorize request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const redirectLocation = pm.response.headers.get(\"Location\");",
+									"",
+									"const cookieHeaders = pm.response.headers.filter((header) => header.key === 'Set-Cookie')",
+									"  .map((header) => `${header.value.split(';')[0].trim()}`)",
+									"  .join('; ');",
+									"",
+									"pm.collectionVariables.set('dev.authCookie', cookieHeaders);",
+									"pm.collectionVariables.set('dev.redirectLocation', redirectLocation);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"disableCookies": true,
+						"removeRefererHeaderOnRedirect": true
+					},
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "secret",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "test-client",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Basic bWFuYWdlbWVudC1hcHA6c2VjcmV0",
+								"disabled": true
+							},
+							{
+								"key": "Cookie",
+								"type": "text",
+								"value": "{{dev.authCookie}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "_csrf",
+									"value": "{{dev.csrf}}",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "username",
+									"value": "rexijie",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "_csrf",
+									"value": "{{dev.csrf}}",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dev.baseURL}}{{dev.authorizeFormAction}}",
+							"host": [
+								"{{dev.baseURL}}{{dev.authorizeFormAction}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3 confirm access",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var redirectLocation = pm.response.headers.get(\"Location\"),",
+									"  sdk = require('postman-collection'),",
+									"  url = new sdk.Url(redirectLocation),",
+									"  code = url.query.find(param => param.key === \"code\").value;",
+									"  ",
+									"pm.collectionVariables.set(\"dev.authCode\", code);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var redirectLocation = pm.collectionVariables.get('dev.redirectLocation');",
+									"",
+									"const req = {",
+									"    url: redirectLocation,",
+									"    method: 'GET'",
+									"}",
+									"",
+									"pm.sendRequest(req);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableCookies": true,
+						"followRedirects": false
+					},
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "secret",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "test-client",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Referer",
+								"type": "text",
+								"value": "{{dev.baseURL}}{{dev.authorizeFormAction}}"
+							},
+							{
+								"key": "Cookie",
+								"type": "text",
+								"value": "{{dev.authCookie}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "_csrf",
+									"value": "{{dev.csrf}}",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "user_oauth_approval",
+									"value": "true",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "openid",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "read",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "write",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dev.baseURL}}{{dev.redirectLocation}}",
+							"host": [
+								"{{dev.baseURL}}{{dev.redirectLocation}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4 get_token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var token = pm.response.json();",
+									"",
+									"pm.collectionVariables.set(\"dev.accessToken\", token['access_token'])",
+									"pm.collectionVariables.set(\"dev.refreshToken\", token['refresh_token'])",
+									"pm.collectionVariables.set(\"dev.idToken\", token['id_token'])"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "secret",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "test-client",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Basic bWFuYWdlbWVudC1hcHA6c2VjcmV0",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:8008/login/oauth2/code/",
+									"type": "text"
+								},
+								{
+									"key": "code",
+									"value": "{{dev.authCode}}",
+									"type": "text"
+								},
+								{
+									"key": "state",
+									"value": "random_string",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "read write openid profile email",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "text"
+								},
+								{
+									"key": "nonce",
+									"value": "randopn_nonce_string",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/oauth2/token",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"oauth2",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "This folder contains requests for the Authorization code oauth2 flow",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Implicit flow",
+			"item": [
+				{
+					"name": "1 authorization login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const $ = cheerio.load(pm.response.text());",
+									"const formAction = $('.form').attr('action');",
+									"const csrfToken = $('[name=_csrf]').attr('value');",
+									"",
+									"const cookieHeaders = pm.response.headers.filter((header) => header.key === 'Set-Cookie')",
+									"  .map((header) => `${header.value.split(';')[0].trim()}`)",
+									"  .join('; ');",
+									"const authRequest = pm.request.url.toString();",
+									"",
+									"pm.collectionVariables.set('dev.authorizeFormAction', formAction);",
+									"if (cookieHeaders.length > 2) {",
+									"pm.collectionVariables.set('dev.authCookie', cookieHeaders);",
+									"}",
+									"pm.collectionVariables.set('dev.implicitRequest', authRequest);",
+									"pm.collectionVariables.set('dev.csrf', csrfToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableCookies": true,
+						"followRedirects": true,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "{{dev.authCookie}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{dev.baseURL}}/oauth2/authorize?grant_type=authorization_code&response_type=token&redirect_uri=http://localhost:8008/login/oauth2/code/&client_id=management-app&scope=read write openid profile&state=random_string&nonce=nonce_valmestamp",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"oauth2",
+								"authorize"
+							],
+							"query": [
+								{
+									"key": "grant_type",
+									"value": "authorization_code"
+								},
+								{
+									"key": "response_type",
+									"value": "token"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:8008/login/oauth2/code/"
+								},
+								{
+									"key": "client_id",
+									"value": "management-app"
+								},
+								{
+									"key": "scope",
+									"value": "read write openid profile"
+								},
+								{
+									"key": "state",
+									"value": "random_string"
+								},
+								{
+									"key": "nonce",
+									"value": "nonce_valmestamp"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2 authorize request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const redirectLocation = pm.response.headers.get(\"Location\");",
+									"",
+									"const cookieHeaders = pm.response.headers.filter((header) => header.key === 'Set-Cookie')",
+									"  .map((header) => `${header.value.split(';')[0].trim()}`)",
+									"  .join('; ');",
+									"",
+									"pm.collectionVariables.set('dev.authCookie', cookieHeaders);",
+									"pm.collectionVariables.set('dev.redirectLocation', redirectLocation);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"disableCookies": true,
+						"removeRefererHeaderOnRedirect": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Basic bWFuYWdlbWVudC1hcHA6c2VjcmV0"
+							},
+							{
+								"key": "Cookie",
+								"type": "text",
+								"value": "{{dev.authCookie}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "_csrf",
+									"value": "{{dev.csrf}}",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "rexijie@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "pass@rex",
+									"type": "text"
+								},
+								{
+									"key": "_csrf",
+									"value": "{{dev.csrf}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dev.baseURL}}{{dev.authorizeFormAction}}",
+							"host": [
+								"{{dev.baseURL}}{{dev.authorizeFormAction}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3 pre-confirm access",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const $ = cheerio.load(pm.response.text());",
+									"const formAction = $('.form').attr('action');",
+									"const csrfToken = $('[name=_csrf]').attr('value');",
+									"",
+									"const cookieHeaders = pm.response.headers.filter((header) => header.key === 'Set-Cookie')",
+									"  .map((header) => `${header.value.split(';')[0].trim()}`)",
+									"  .join('; ');",
+									"const authRequest = pm.request.url.toString();",
+									"",
+									"pm.collectionVariables.set('dev.authorizeFormAction', formAction);",
+									"if (cookieHeaders.length > 2) {",
+									"pm.collectionVariables.set('dev.authCookie', cookieHeaders);",
+									"}",
+									"pm.collectionVariables.set('dev.authRequest', authRequest);",
+									"pm.collectionVariables.set('dev.csrf', csrfToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableCookies": true,
+						"followRedirects": true,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "{{dev.authCookie}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{dev.implicitRequest}}",
+							"host": [
+								"{{dev.implicitRequest}}"
+							],
+							"query": [
+								{
+									"key": "cookie",
+									"value": "{{dev.authCookie}}",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4 confirm access",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var redirectLocation = pm.response.headers.get(\"Location\")",
+									"let sdk = require('postman-collection')",
+									"",
+									"let tokenUrl = new sdk.Url(redirectLocation.replace('#', '?')),",
+									"token = tokenUrl.query.find(param => param.key === \"access_token\").value,",
+									"idToken = tokenUrl.query.find(param => param.key === \"id_token\").value",
+									"",
+									"  ",
+									"pm.collectionVariables.set(\"dev.accessToken\", token);",
+									"pm.collectionVariables.set(\"dev.dev.idToken\", idToken);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var redirectLocation = pm.collectionVariables.get('dev.redirectLocation');",
+									"",
+									"const req = {",
+									"    url: redirectLocation,",
+									"    method: 'GET'",
+									"}",
+									"",
+									"pm.sendRequest(req);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableCookies": true,
+						"followRedirects": false
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Referer",
+								"type": "text",
+								"value": "{{dev.baseURL}}{{dev.authorizeFormAction}}"
+							},
+							{
+								"key": "Cookie",
+								"type": "text",
+								"value": "{{dev.authCookie}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "_csrf",
+									"value": "{{dev.csrf}}",
+									"type": "text"
+								},
+								{
+									"key": "user_oauth_approval",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "scope.openid",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "scope.read",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "scope.write",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dev.implicitRequest}}",
+							"host": [
+								"{{dev.implicitRequest}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "This folder contains requests for the Authorization code oauth2 flow",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "id_token flow",
+			"item": [
+				{
+					"name": "1 authorization login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const $ = cheerio.load(pm.response.text());",
+									"const formAction = $('.form').attr('action');",
+									"const csrfToken = $('[name=_csrf]').attr('value');",
+									"",
+									"const cookieHeaders = pm.response.headers.filter((header) => header.key === 'Set-Cookie')",
+									"  .map((header) => `${header.value.split(';')[0].trim()}`)",
+									"  .join('; ');",
+									"const authRequest = pm.request.url.toString();",
+									"",
+									"pm.collectionVariables.set('dev.authorizeFormAction', formAction);",
+									"if (cookieHeaders.length > 2) {",
+									"pm.collectionVariables.set('dev.authCookie', cookieHeaders);",
+									"}",
+									"pm.collectionVariables.set('dev.implicitRequest', authRequest);",
+									"pm.collectionVariables.set('dev.csrf', csrfToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableCookies": true,
+						"followRedirects": true,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "{{dev.authCookie}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{dev.baseURL}}/oauth2/authorize?grant_type=authorization_code&response_type=id_token&redirect_uri=http://localhost:8008/login/oauth2/code/&client_id=management-app&scope=read write openid profile&state=random_string&nonce=nonce_string",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"oauth2",
+								"authorize"
+							],
+							"query": [
+								{
+									"key": "grant_type",
+									"value": "authorization_code"
+								},
+								{
+									"key": "response_type",
+									"value": "id_token"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:8008/login/oauth2/code/"
+								},
+								{
+									"key": "client_id",
+									"value": "management-app"
+								},
+								{
+									"key": "scope",
+									"value": "read write openid profile"
+								},
+								{
+									"key": "state",
+									"value": "random_string"
+								},
+								{
+									"key": "nonce",
+									"value": "nonce_string"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2 authorize request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const redirectLocation = pm.response.headers.get(\"Location\");",
+									"",
+									"const cookieHeaders = pm.response.headers.filter((header) => header.key === 'Set-Cookie')",
+									"  .map((header) => `${header.value.split(';')[0].trim()}`)",
+									"  .join('; ');",
+									"",
+									"pm.collectionVariables.set('dev.authCookie', cookieHeaders);",
+									"pm.collectionVariables.set('dev.redirectLocation', redirectLocation);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"disableCookies": true,
+						"removeRefererHeaderOnRedirect": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Basic bWFuYWdlbWVudC1hcHA6c2VjcmV0"
+							},
+							{
+								"key": "Cookie",
+								"type": "text",
+								"value": "{{dev.authCookie}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "_csrf",
+									"value": "{{dev.csrf}}",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "rexijie@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "pass@rex",
+									"type": "text"
+								},
+								{
+									"key": "_csrf",
+									"value": "{{dev.csrf}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dev.baseURL}}{{dev.authorizeFormAction}}",
+							"host": [
+								"{{dev.baseURL}}{{dev.authorizeFormAction}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3 pre-confirm access",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const $ = cheerio.load(pm.response.text());",
+									"const formAction = $('.form').attr('action');",
+									"const csrfToken = $('[name=_csrf]').attr('value');",
+									"",
+									"const cookieHeaders = pm.response.headers.filter((header) => header.key === 'Set-Cookie')",
+									"  .map((header) => `${header.value.split(';')[0].trim()}`)",
+									"  .join('; ');",
+									"const authRequest = pm.request.url.toString();",
+									"",
+									"pm.collectionVariables.set('dev.authorizeFormAction', formAction);",
+									"if (cookieHeaders.length > 2) {",
+									"pm.collectionVariables.set('dev.authCookie', cookieHeaders);",
+									"}",
+									"pm.collectionVariables.set('dev.authRequest', authRequest);",
+									"pm.collectionVariables.set('dev.csrf', csrfToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableCookies": true,
+						"followRedirects": true,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "{{dev.authCookie}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{dev.implicitRequest}}",
+							"host": [
+								"{{dev.implicitRequest}}"
+							],
+							"query": [
+								{
+									"key": "cookie",
+									"value": "{{dev.authCookie}}",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4 confirm access",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var redirectLocation = pm.response.headers.get(\"Location\")",
+									"let sdk = require('postman-collection')",
+									"",
+									"let tokenUrl = new sdk.Url(redirectLocation.replace('#', '?')),",
+									"token = tokenUrl.query.find(param => param.key === \"access_token\").value,",
+									"idToken = tokenUrl.query.find(param => param.key === \"id_token\").value",
+									"",
+									"  ",
+									"pm.collectionVariables.set(\"dev.accessToken\", token);",
+									"pm.collectionVariables.set(\"dev.dev.idToken\", idToken);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var redirectLocation = pm.collectionVariables.get('dev.redirectLocation');",
+									"",
+									"const req = {",
+									"    url: redirectLocation,",
+									"    method: 'GET'",
+									"}",
+									"",
+									"pm.sendRequest(req);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableCookies": true,
+						"followRedirects": false
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Referer",
+								"type": "text",
+								"value": "{{dev.baseURL}}{{dev.authorizeFormAction}}"
+							},
+							{
+								"key": "Cookie",
+								"type": "text",
+								"value": "{{dev.authCookie}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "_csrf",
+									"value": "{{dev.csrf}}",
+									"type": "text"
+								},
+								{
+									"key": "user_oauth_approval",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "scope.openid",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "scope.read",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "scope.write",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dev.implicitRequest}}",
+							"host": [
+								"{{dev.implicitRequest}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "This folder contains requests for the Authorization code oauth2 flow",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "client_credentials flow",
+			"item": [
+				{
+					"name": "get token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "test-client",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "secret",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								},
+								{
+									"key": "scopes",
+									"value": "read",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dev.baseURL}}/oauth/token",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"oauth",
+								"token"
+							]
+						},
+						"description": "get token using the client credentials grant type"
+					},
+					"response": []
+				}
+			],
+			"description": "This folder contains requests for the Implicit OAuth2 flow",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "OIDC endpoints",
+			"item": [
+				{
+					"name": "OIDC discovery",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{dev.baseURL}}/openid/.well-known/openid-configuration",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"openid",
+								".well-known",
+								"openid-configuration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "jwks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{dev.baseURL}}/openid/.well-known/jwks.json",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"openid",
+								".well-known",
+								"jwks.json"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "registration",
+			"item": [
+				{
+					"name": "Get Clients",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{dev.accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{dev.baseURL}}/api/clients",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"api",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Principal",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{dev.accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{dev.baseURL}}/api/users/principal",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"principal"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "register client",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{dev.accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"app-client\",\n    \"client_type\": \"public\",\n    \"client_profile\": \"web\",\n    \"homepage\": \"https://rexijie.dev\",\n    \"policy_url\": \"https://rexijie.dev/privacy\",\n    \"default_max_age\": 600,\n    \"require_auth_time_claim\": false,\n    \"resource_ids\": [\"rex_app\", \"rex_uber\"],\n    \"grant_types_supported\": [\"password\", \"authorization_code\", \"openid\"],\n    \"redirect_uris\": [\"https://rexijie.dev/oauth/code/\"],\n    \"token_validity_seconds\": 600,\n    \"refresh_token_validity_seconds\": 3600\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{dev.baseURL}}/api/clients",
+							"host": [
+								"{{dev.baseURL}}"
+							],
+							"path": [
+								"api",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "check_token",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "secret",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "management-app",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjllOTZiNjY5NTU0NDc0ZjkifQ.eyJhdWQiOlsiYmVub2x5L3N0b2NrLW1hbmFnZW1lbnQiXSwic3ViIjoicmV4aWppZUBnbWFpbC5jb20iLCJyb2xlIjoiVVNFUiIsInNjb3BlIjpbIm9wZW5pZCIsInByb2ZpbGUiLCJyZWFkIl0sImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjgwMDAiLCJleHAiOjE1OTk0OTEwNTIsImlhdCI6MTU5OTQ5MDQ1MiwiYXV0aG9yaXRpZXMiOlsiUk9MRV9DQU5fVklFVyIsIlJPTEVfVVNFUiJdLCJqdGkiOiIzYjA3NzRlYy1mM2IwLTQ0YTctYWQ2MS03ZThiYWVmMWRlMjYiLCJjbGllbnRfaWQiOiJtYW5hZ2VtZW50LWFwcCJ9.FBn0EI0n65ZVfQqb68C0Hw76CMwqmC7QqaUk7LzK5tyOMgWg7EaUe-NScEY3SCPANUWa-OZ1om8VsI_H6eRkerXDZqg11FwAIDuc-Sc6Y0fGXV_4Sc5tZYNgsEWIrS1Tm9LgrYqCO4RMlM9KI9dqt2WY9db7GxJSb1kPhACjAWlVEUm4_oYWXWpoa2LEUCnTLs35taAVVMDiVdySbBsrW0uv4g0YF0NDRuMfEhx2MKhtvweJ2UuTBzK4MIKBQVNWVh6Za2uwvbo9Q36MZJUv8GoW1g6NKRJxA8FE32UShFvz6miY011MJOltB35vyViemqa1bqfzE8VDaJqIKo5s2w",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{dev.baseURL}}/oauth2/check_token?token={{dev.accessToken}}",
+					"host": [
+						"{{dev.baseURL}}"
+					],
+					"path": [
+						"oauth2",
+						"check_token"
+					],
+					"query": [
+						{
+							"key": "token",
+							"value": "{{dev.accessToken}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "refresh_token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var token = pm.response.json();",
+							"",
+							"pm.collectionVariables.set(\"dev.accessToken\", token['access_token'])",
+							"pm.collectionVariables.set(\"dev.refreshToken\", token['refresh_token'])",
+							"pm.collectionVariables.set(\"dev.idToken\", token['id_token'])"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "secret",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "management-app",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "grant_type",
+							"value": "refresh_token",
+							"type": "text"
+						},
+						{
+							"key": "refresh_token",
+							"value": "{{dev.refreshToken}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{dev.baseURL}}/oauth2/token",
+					"host": [
+						"{{dev.baseURL}}"
+					],
+					"path": [
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user info",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{dev.accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Basic bWFuYWdlbWVudC1hcHA6c2VjcmV0",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{dev.baseURL}}/oauth2/userinfo",
+					"host": [
+						"{{dev.baseURL}}"
+					],
+					"path": [
+						"oauth2",
+						"userinfo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "introspect",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{dev.accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Basic bWFuYWdlbWVudC1hcHA6c2VjcmV0",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{dev.baseURL}}/oauth2/introspect",
+					"host": [
+						"{{dev.baseURL}}"
+					],
+					"path": [
+						"oauth2",
+						"introspect"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "token_key",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic bWFuYWdlbWVudC1hcHA6c2VjcmV0",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{dev.baseURL}}/oauth2/token_key",
+					"host": [
+						"{{dev.baseURL}}"
+					],
+					"path": [
+						"oauth2",
+						"token_key"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "dev.accessToken",
+			"value": ""
+		},
+		{
+			"key": "dev.refreshToken",
+			"value": ""
+		},
+		{
+			"key": "dev.authCookie",
+			"value": ""
+		},
+		{
+			"key": "dev.authorizeFormAction",
+			"value": ""
+		},
+		{
+			"key": "dev.baseURL",
+			"value": "http://localhost:8000"
+		},
+		{
+			"key": "dev.authRequest",
+			"value": ""
+		},
+		{
+			"key": "dev.csrf",
+			"value": ""
+		},
+		{
+			"key": "dev.authCode",
+			"value": ""
+		},
+		{
+			"key": "dev.redirectLocation",
+			"value": ""
+		},
+		{
+			"key": "dev.idToken",
+			"value": ""
+		},
+		{
+			"key": "dev.implicitRequest",
+			"value": ""
+		},
+		{
+			"key": "dev.dev.idToken",
+			"value": ""
+		}
+	]
+}
