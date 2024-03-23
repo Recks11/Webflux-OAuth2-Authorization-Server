@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, toRaw } from 'vue'
 import BaseButton from '@/components/BaseButton.vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import BaseForm from '@/components/BaseForm.vue'
 
 const state = reactive({
@@ -17,24 +17,19 @@ const authentication = reactive({
 const route = useRoute()
 
 onMounted(() => {
-  // initAuthorization()
+  initAuthorization()
 })
 
 function initAuthorization() {
   fetch(`/auth-server/oauth2${route.fullPath}`, {
     method: 'GET',
     headers: {
-      'Authorization': `Basic ${btoa('test-client:secret')}`,
+      'Authorization': `Basic ${btoa('test-client:secret')}`
     }
   })
 }
+
 function authorize() {
-  const body = new FormData();
-  body.set('username', authentication.username)
-  body.set('password', authentication.password)
-
-
-
   fetch(`/auth-server/oauth2${route.fullPath}`, {
     method: 'POST',
     body: new URLSearchParams(toRaw(authentication)),
@@ -43,13 +38,7 @@ function authorize() {
       'Content-type': 'application/x-www-form-urlencoded'
     },
     redirect: 'manual'
-  }).then((resp) => {
-    console.log(resp)
-    resp.headers.forEach((value, key) => {
-      console.log(key, value)
-    })
   })
-    .catch(reason => console.error(reason))
 }
 
 </script>
