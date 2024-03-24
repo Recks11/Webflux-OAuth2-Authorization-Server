@@ -15,11 +15,11 @@ public class RefreshTokenGranter implements TokenGranter {
 
     @Override
     public Mono<AuthorizationRequest> validateRequest(Authentication authentication, AuthorizationRequest authorizationRequest) {
-        return null;
+        return Mono.empty();
     }
 
     @Override
     public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
-        return null;
+        return Mono.empty();
     }
 }
