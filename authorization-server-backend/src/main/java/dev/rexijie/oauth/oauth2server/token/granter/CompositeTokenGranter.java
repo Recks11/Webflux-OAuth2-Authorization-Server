@@ -31,7 +31,8 @@ public class CompositeTokenGranter implements TokenGranter {
                 AuthorizationGrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenServices, userAuthenticationManager),
                 AuthorizationGrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenServices, authorizationCodeServices),
                 AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenServices, clientAuthenticationManager),
-                AuthorizationGrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenServices)
+                AuthorizationGrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenServices),
+                AuthorizationGrantType.IMPLICIT, new ImplicitTokenGranter(tokenServices, userAuthenticationManager)
         ));
     }
 

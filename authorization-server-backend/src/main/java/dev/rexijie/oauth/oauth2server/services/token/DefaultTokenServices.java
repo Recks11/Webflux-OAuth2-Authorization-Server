@@ -113,6 +113,7 @@ public class DefaultTokenServices implements TokenServices {
         return getTokenEnhancer().enhance(accessToken, authentication);
     }
 
+    // TODO - refresh token here?
     private Mono<OAuth2Token> createUserToken(String clientId, String userId, OAuth2Authentication clientAuthentication) {
         return clientService.findClientById(clientId)
                 .zipWith(userService.findUserByUsername(userId), (clientDTO, userDTO) -> {

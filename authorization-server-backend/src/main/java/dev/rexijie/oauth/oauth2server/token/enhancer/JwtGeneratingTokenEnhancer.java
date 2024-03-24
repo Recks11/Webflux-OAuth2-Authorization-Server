@@ -77,16 +77,18 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                         .doOnError(throwable -> {
                             throw Exceptions.propagate(throwable);
                         })
-                        .map(signedJwt -> {
+                        .handle((signedJwt, sink) -> {
                             try {
-                                return createAccessToken(signedJwt, jwtToken.getJWTClaimsSet(), token);
+                                 var generatedToken = createAccessToken(signedJwt, jwtToken.getJWTClaimsSet(), token);
+                                 sink.next(generatedToken);
+                                 sink.complete();
                             } catch (ParseException e) {
                                 LOG.error("Error Signing Token");
-                                throw Exceptions.propagate(e);
+                                sink.error(e);
                             }
                         });
             } catch (OAuth2AuthenticationException ex) {
-                LOG.error("an Error occured while Enhancing token");
+                LOG.error("an Error occurred while Enhancing token");
                 return Mono.error(Exceptions.propagate(ex));
             }
         }
@@ -101,13 +103,13 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
     @Override
     public Mono<OAuth2Authentication> readAuthentication(OAuth2Token auth2Token, OAuth2Authentication authentication) {
         return jwtSigner.deserialize(auth2Token.getTokenValue())
-                .map(jwt -> {
+                .handle((jwt, sink) -> {
                     try {
                         var jwtClaimsSet = jwt.getJWTClaimsSet();
                         OAuth2Authentication auth = OAuth2Authentication.from(authentication);
                         if (!jwtClaimsSet.getAudience().contains(authentication.getPrincipal().toString()))
-                            throw new OAuth2AuthorizationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT),
-                                    "This client is unauthorized to use this code");
+                            sink.error(new OAuth2AuthorizationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT),
+                                    "This client is unauthorized to use this code"));
                         var auReq = jwtClaimsSet.getJSONObjectClaim(AUTHORIZATION_REQUEST);
                         var authReqString = JSONObjectUtils.toJSONString(auReq);
                         var authorizationRequest = getObjectMapper().readValue(authReqString, AuthorizationRequest.class);
@@ -117,13 +119,15 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                                 new OAuth2Authentication(jwtClaimsSet.getSubject(), "from_code")
                         ));
                         auth.setAuthenticationStage(AuthenticationStage.COMPLETE);
-                        return auth;
+                        sink.next(auth);
                     } catch (JsonProcessingException exception) {
                         LOG.error("Error reading Authentication from stored Token");
-                        throw Exceptions.propagate(exception);
+                        sink.error(exception);
                     } catch (ParseException exception) {
                         LOG.error("Error retrieving AuthorizationRequest from Jwt Claims");
-                        throw Exceptions.propagate(exception);
+                        sink.error(exception);
+                    } finally {
+                        sink.complete();
                     }
                 });
     }
@@ -158,6 +162,10 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 .jwtID(jti)
                 .issuer(properties.openId().issuer())
                 .subject(tokenInfo.get("username"))
+                .claim(SCOPES, authentication.getStoredRequest().getScope())
+                .claim(AUTHORITIES, authentication.getUserAuthentication()
+                        .getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority).collect(Collectors.toSet()))
                 .audience(authentication.getPrincipal().toString())
                 .notBeforeTime(Date.from(Instant.ofEpochSecond(authentication.getAuthenticationTime())))
                 .issueTime(Date.from(Instant.now()))
