@@ -1,0 +1,42 @@
+form {
+    position: relative;
+}
+.form-footer {margin: 20px -20px 0 -20px;}
+.button-row {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+}
+.approval-text {
+    margin: 0;
+    line-height: 1.6em;
+}
+.form-label {
+    display: none;
+}
+.icon {
+    width: 50px;
+}
+.icon > img {
+    width: 100%;
+}
+.content {
+    margin-left: 10px;
+}
+.title {
+    margin-bottom: 0;
+    font-size: 1.2rem;
+}
+
+.description {
+    margin-top: 5px;
+}
+
+.mr10 {
+    margin-right: 10px;
+}
+@media screen and (max-width: 767px) {
+    .button-row {
+        position: unset;
+    }
+}

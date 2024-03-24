@@ -1,0 +1,20 @@
+oauth2:
+  server:
+    resourceid: TEST_APP
+    implicit-enabled: true
+    base-path: /oauth
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${DISCOVERY_URL:https://discovery.rexijie.dev/eureka/}
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration
+#      - org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration
+#      - org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration
+  data:
+    mongodb:
+      auto-index-creation: true
