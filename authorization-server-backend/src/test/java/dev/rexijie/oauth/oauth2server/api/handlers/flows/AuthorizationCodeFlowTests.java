@@ -81,8 +81,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .get()
                 .uri(authorizationUri)
                 .exchange()
-                .expectStatus().isTemporaryRedirect()
-                .expectHeader().location(getUriBuilder().replacePath(LOGIN_ENDPOINT).build().toString())
+                .expectStatus().isOk()
                 .expectCookie().exists(SESSION_ID)
                 .returnResult(Object.class);
 

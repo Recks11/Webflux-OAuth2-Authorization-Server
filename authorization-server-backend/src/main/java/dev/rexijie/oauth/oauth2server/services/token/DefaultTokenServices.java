@@ -4,6 +4,7 @@ import com.nimbusds.oauth2.sdk.GrantType;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import dev.rexijie.oauth.oauth2server.api.domain.RefreshTokenRequest;
+import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.services.client.ClientService;
 import dev.rexijie.oauth.oauth2server.services.user.UserService;
@@ -71,6 +72,17 @@ public class DefaultTokenServices implements TokenServices {
             } catch (ParseException e) {
                 throw Exceptions.propagate(INVALID_GRANT_ERROR);
             }
+        }
+        return Mono.error(INVALID_CLIENT_ERROR);
+    }
+
+    @Override
+    public Mono<OAuth2Token> createRefreshToken(Mono<OAuth2Token> accessToken, Authentication authentication) {
+        if (authentication instanceof OAuth2Authentication clientAuthentication) {
+            clientAuthentication.setAuthenticationStage(AuthenticationStage.GENERATE_REFRESH_TOKEN);
+            return accessToken.flatMap(
+                    token -> getTokenEnhancer().enhance((OAuth2AccessToken) token, clientAuthentication)
+            );
         }
         return Mono.error(INVALID_CLIENT_ERROR);
     }

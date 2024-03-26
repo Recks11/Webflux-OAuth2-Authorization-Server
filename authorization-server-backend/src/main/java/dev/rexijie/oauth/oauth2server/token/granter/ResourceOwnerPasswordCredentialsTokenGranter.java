@@ -3,12 +3,12 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
+import dev.rexijie.oauth.oauth2server.token.AuthorizationTokenResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.OAuth2Token;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
@@ -31,7 +31,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractOAuth2
     }
 
     @Override
-    public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
+    public Mono<AuthorizationTokenResponse> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
         LOG.debug("Received request");
         return validateRequest(authentication, authorizationRequest)
                 .flatMap(req -> authenticateUsernameAndPassword(req)
@@ -42,9 +42,9 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractOAuth2
                             throw Exceptions.propagate(throwable);
                         })
                         .map(oAuth2AuthorizationRequest -> createAuthenticationToken(authentication, oAuth2AuthorizationRequest))
-                        .doOnSuccess(authentication1 ->
-                                LOG.debug("Created Authentication token for client {} and user {}", authentication1.getPrincipal(),
-                                        authentication1.getUserAuthentication().getPrincipal()))
-                        .flatMap(getTokenServices()::createAccessToken));
+                        .doOnSuccess(fullAuthentication ->
+                                LOG.debug("Created Authentication token for client {} and user {}", fullAuthentication.getPrincipal(),
+                                        fullAuthentication.getUserAuthentication().getPrincipal()))
+                        .flatMap(this::grantTokensFromAuthentication));
     }
 }

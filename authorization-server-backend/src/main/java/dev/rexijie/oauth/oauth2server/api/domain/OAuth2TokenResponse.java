@@ -3,7 +3,9 @@ package dev.rexijie.oauth.oauth2server.api.domain;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import dev.rexijie.oauth.oauth2server.token.AuthorizationTokenResponse;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -68,12 +70,13 @@ public class OAuth2TokenResponse implements Serializable {
         this.refreshToken = refreshToken;
     }
 
-    public static OAuth2TokenResponse fromAccessToken(OAuth2AccessToken accessToken) {
-        return new OAuth2TokenResponse(accessToken.getTokenValue(),
-                accessToken.getTokenType().getValue(),
-                StringUtils.collectionToDelimitedString(accessToken.getScopes(), " "),
+    public static OAuth2TokenResponse fromAuthorizationTokenResponse(AuthorizationTokenResponse tokenResponse) {
+        var accessToken = tokenResponse.accessToken();
+        return new OAuth2TokenResponse(tokenResponse.accessToken().getTokenValue(),
+                OAuth2AccessToken.TokenType.BEARER.getValue(),
+                StringUtils.collectionToDelimitedString(tokenResponse.scopes(), " "),
                 (int) Objects.requireNonNull(accessToken.getExpiresAt()).getEpochSecond() -
                         Objects.requireNonNull(accessToken.getIssuedAt()).getEpochSecond(),
-                null);
+                tokenResponse.refreshToken().map(OAuth2Token::getTokenValue).orElse(null));
     }
 }

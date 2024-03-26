@@ -4,11 +4,11 @@ import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.mocks.ModelMocks;
+import dev.rexijie.oauth.oauth2server.token.AuthorizationTokenResponse;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2Token;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -27,7 +27,7 @@ class ClientCredentialsTokenGranterTest extends TokenGranterTest {
     @Test
     void grantToken() {
 
-        Mono<OAuth2Token> oAuth2TokenMono = tokenGranter.grantToken(clientAuthentication(),
+        Mono<AuthorizationTokenResponse> oAuth2TokenMono = tokenGranter.grantToken(clientAuthentication(),
                 authorizationRequest());
 
         StepVerifier.create(oAuth2TokenMono)

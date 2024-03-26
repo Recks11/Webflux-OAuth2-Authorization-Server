@@ -68,6 +68,8 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
                 final SignedJWT jwtToken = switch (oAuth2Authentication.getAuthenticationStage()) {
                     case COMPLETE -> createToken(token, oAuth2Authentication);
                     case PENDING_APPROVAL -> createApprovalToken(token, oAuth2Authentication);
+                    case GENERATE_REFRESH_TOKEN ->
+                            createToken(createHeader(Map.of()), createRefreshClaims(token, oAuth2Authentication));
                     default -> throw new OAuth2AuthenticationException("Invalid Authentication");
                 };
 
@@ -153,15 +155,14 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
     }
 
     private JWTClaimsSet createRefreshClaims(OAuth2AccessToken token, OAuth2Authentication authentication) {
-        LOG.debug("Generating JWT Claims Set");
-        var tokenInfo = extractAdditionalInformationFromToken(token.getTokenValue());
+        LOG.debug("Generating RefreshToken JWT Claims Set");
         var jti = getIdFromToken(token);
         ClientDTO details = authentication.getDetails(ClientDTO.class);
 
         return new JWTClaimsSet.Builder()
                 .jwtID(jti)
                 .issuer(properties.openId().issuer())
-                .subject(tokenInfo.get("username"))
+                .subject(authentication.getUserAuthentication().getName())
                 .claim(SCOPES, authentication.getStoredRequest().getScope())
                 .claim(AUTHORITIES, authentication.getUserAuthentication()
                         .getAuthorities().stream()
@@ -174,7 +175,7 @@ public class JwtGeneratingTokenEnhancer implements TokenEnhancer {
     }
 
     private JWTClaimsSet createUserClaimSet(OAuth2AccessToken token, OAuth2Authentication authentication) {
-        LOG.debug("Generating JWT Claims Set");
+        LOG.debug("Generating Access Token JWT Claims Set");
         var tokenInfo = extractAdditionalInformationFromToken(token.getTokenValue());
         var jti = getIdFromToken(token);
         ClientDTO details = authentication.getDetails(ClientDTO.class);
