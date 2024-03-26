@@ -160,7 +160,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                     assertThat(oAuth2TokenResponse.getScope().split(" ")).containsAll(List.of("read", "write"));
                     assertThat(oAuth2TokenResponse.getAccessToken()).isNotNull();
                     assertThat(oAuth2TokenResponse.getTokenType()).isEqualToIgnoringCase("bearer");
-//                    assertThat(oAuth2TokenResponse.getRefreshToken()).isNotNull();
+                    assertThat(oAuth2TokenResponse.getRefreshToken()).isNotNull();
                 })
                 .verifyComplete();
 
