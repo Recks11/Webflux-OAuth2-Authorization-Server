@@ -38,7 +38,7 @@ public abstract class AbstractOAuth2TokenGranter implements TokenGranter {
         );
 
         return getAuthenticationManager().authenticate(usernameAndPasswordToken)
-                .doOnError(throwable -> Mono.error(new OAuthError(throwable, throwable.getMessage(), "error authenticating user")))
+                .doOnError(throwable -> new OAuthError(throwable, throwable.getMessage(), "error authenticating user"))
                 .map(authentication -> new OAuth2AuthorizationRequest(authorizationRequest, authentication));
     }
 

@@ -57,7 +57,6 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
 
     @Test
     void givenInvalidRequest_whenGenerateToken_thenError() {
-        String code = clientAuthentication().getStoredRequest().getAttribute("code");
 
         var ar = new AuthorizationRequest(
                 "invalid_grant",

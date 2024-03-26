@@ -56,11 +56,11 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
     private static final Map<String, ResponseCookie> responseCookieState = new HashMap<>();
     private static final String SESSION_ID = SESSION_COOKIE_NAME;
     @Autowired
-    Signer signer;
+    private Signer signer;
     @Autowired
     private TokenService tokenService;
     @Autowired
-    OAuth2Properties properties;
+    private OAuth2Properties properties;
 
     @Override
     public void setUp() {
