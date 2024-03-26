@@ -8,6 +8,7 @@ eureka:
   client:
     service-url:
       defaultZone: ${DISCOVERY_URL:https://discovery.rexijie.dev/eureka/}
+    enabled: false
 spring:
   autoconfigure:
     exclude:

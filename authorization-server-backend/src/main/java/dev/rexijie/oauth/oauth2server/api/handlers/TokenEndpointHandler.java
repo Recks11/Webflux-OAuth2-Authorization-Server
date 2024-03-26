@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.CacheControl;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -33,9 +32,8 @@ public class TokenEndpointHandler extends OAuthEndpointHandler {
         return extractAuthorization(request)
                 .doOnNext(authorizationRequest -> LOG.debug("Granting token for request {}", request.uri()))
                 .flatMap(authorizationRequest -> request.principal() // get authenticated client credentials from request
-                        .flatMap(principal -> tokenGranter.grantToken((Authentication) principal, authorizationRequest) // grant token
-                                .cast(OAuth2AccessToken.class))// cast to OAuth2AccessToken class
-                        .map(OAuth2TokenResponse::fromAccessToken)) // convert to access token response
+                        .flatMap(principal -> tokenGranter.grantToken((Authentication) principal, authorizationRequest))// cast to OAuth2AccessToken class
+                        .map(OAuth2TokenResponse::fromAuthorizationTokenResponse)) // convert to access token response
                 .doOnNext(oAuth2TokenResponse -> LOG.debug("Successfully Granted Token"))
                 .flatMap(token -> ServerResponse
                         .ok()

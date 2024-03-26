@@ -3,11 +3,11 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.services.ReactiveAuthorizationCodeServices;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
+import dev.rexijie.oauth.oauth2server.token.AuthorizationTokenResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.stereotype.Component;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
@@ -31,7 +31,8 @@ public class CompositeTokenGranter implements TokenGranter {
                 AuthorizationGrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenServices, userAuthenticationManager),
                 AuthorizationGrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenServices, authorizationCodeServices),
                 AuthorizationGrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenServices, clientAuthenticationManager),
-                AuthorizationGrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenServices)
+                AuthorizationGrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenServices),
+                AuthorizationGrantType.IMPLICIT, new ImplicitTokenGranter(tokenServices, userAuthenticationManager)
         ));
     }
 
@@ -43,7 +44,7 @@ public class CompositeTokenGranter implements TokenGranter {
     }
 
     @Override
-    public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
+    public Mono<AuthorizationTokenResponse> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
         return validateRequest(authentication, authorizationRequest)
                 .flatMap(validReq -> {
                     var granter = getTokenGranterForRequest(tokenGranterMap, validReq);

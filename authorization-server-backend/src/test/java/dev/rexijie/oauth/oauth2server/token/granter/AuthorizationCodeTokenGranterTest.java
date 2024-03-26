@@ -3,11 +3,11 @@ package dev.rexijie.oauth.oauth2server.token.granter;
 import dev.rexijie.oauth.oauth2server.api.domain.AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.services.ReactiveAuthorizationCodeServices;
+import dev.rexijie.oauth.oauth2server.token.AuthorizationTokenResponse;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2Token;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -45,7 +45,7 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
         String code = clientAuthentication().getStoredRequest().getAttribute("code");
         when(authorizationCodeServices.consumeAuthorizationCode(eq(code), any()))
                 .then(returnsMonoAtArg(1));
-        Mono<OAuth2Token> oAuth2TokenMono = tokenGranter.grantToken(clientAuthentication(), authorizationRequest());
+        Mono<AuthorizationTokenResponse> oAuth2TokenMono = tokenGranter.grantToken(clientAuthentication(), authorizationRequest());
 
         StepVerifier.create(oAuth2TokenMono)
                 .consumeNextWith(auth2Token -> {
@@ -57,7 +57,6 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
 
     @Test
     void givenInvalidRequest_whenGenerateToken_thenError() {
-        String code = clientAuthentication().getStoredRequest().getAttribute("code");
 
         var ar = new AuthorizationRequest(
                 "invalid_grant",
@@ -71,7 +70,7 @@ class AuthorizationCodeTokenGranterTest extends TokenGranterTest {
         ar.setAttribute("code", "invalid_code");
         ar.setAttribute(USERNAME_ATTRIBUTE, "rexijie");
         ar.setAttribute(PASSWORD_ATTRIBUTE, "password");
-        Mono<OAuth2Token> token = tokenGranter.grantToken(clientAuthentication(), ar);
+        Mono<AuthorizationTokenResponse> token = tokenGranter.grantToken(clientAuthentication(), ar);
 
         StepVerifier.create(token)
                 .expectError(OAuthError.class)

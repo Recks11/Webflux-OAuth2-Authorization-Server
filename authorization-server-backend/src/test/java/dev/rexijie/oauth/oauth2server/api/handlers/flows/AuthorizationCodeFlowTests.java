@@ -56,11 +56,11 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
     private static final Map<String, ResponseCookie> responseCookieState = new HashMap<>();
     private static final String SESSION_ID = SESSION_COOKIE_NAME;
     @Autowired
-    Signer signer;
+    private Signer signer;
     @Autowired
     private TokenService tokenService;
     @Autowired
-    OAuth2Properties properties;
+    private OAuth2Properties properties;
 
     @Override
     public void setUp() {
@@ -81,8 +81,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                 .get()
                 .uri(authorizationUri)
                 .exchange()
-                .expectStatus().isTemporaryRedirect()
-                .expectHeader().location(getUriBuilder().replacePath(LOGIN_ENDPOINT).build().toString())
+                .expectStatus().isOk()
                 .expectCookie().exists(SESSION_ID)
                 .returnResult(Object.class);
 
@@ -161,7 +160,7 @@ public class AuthorizationCodeFlowTests extends OAuthTest {
                     assertThat(oAuth2TokenResponse.getScope().split(" ")).containsAll(List.of("read", "write"));
                     assertThat(oAuth2TokenResponse.getAccessToken()).isNotNull();
                     assertThat(oAuth2TokenResponse.getTokenType()).isEqualToIgnoringCase("bearer");
-//                    assertThat(oAuth2TokenResponse.getRefreshToken()).isNotNull();
+                    assertThat(oAuth2TokenResponse.getRefreshToken()).isNotNull();
                 })
                 .verifyComplete();
 

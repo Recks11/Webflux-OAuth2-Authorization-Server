@@ -5,9 +5,9 @@ import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.services.ReactiveAuthorizationCodeServices;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
+import dev.rexijie.oauth.oauth2server.token.AuthorizationTokenResponse;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.OAuth2Token;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
@@ -40,12 +40,12 @@ public class AuthorizationCodeTokenGranter extends AbstractOAuth2TokenGranter {
     @Override
     // TODO (Authenticate client before generating token)
     // TODO a code has to be bound to a client and user authentication.
-    public Mono<OAuth2Token> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
+    public Mono<AuthorizationTokenResponse> grantToken(Authentication authentication, AuthorizationRequest authorizationRequest) {
         return validateRequest(authentication, authorizationRequest)
                 .flatMap(request -> {
                     String code = request.getAttribute("code");
                     return authorizationCodeServices.consumeAuthorizationCode(code, authentication)
-                            .flatMap(auth -> getTokenServices().createAccessToken(auth));
+                            .flatMap(this::grantTokensFromAuthentication);
                 });
     }
 

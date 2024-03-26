@@ -5,6 +5,7 @@ import dev.rexijie.oauth.oauth2server.api.domain.OAuth2AuthorizationRequest;
 import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.error.OAuthError;
 import dev.rexijie.oauth.oauth2server.services.token.TokenServices;
+import dev.rexijie.oauth.oauth2server.token.AuthorizationTokenResponse;
 import dev.rexijie.oauth.oauth2server.token.OAuth2Authentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,8 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import reactor.core.publisher.Mono;
+
+import java.util.Optional;
 
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.PASSWORD_ATTRIBUTE;
 import static dev.rexijie.oauth.oauth2server.api.domain.ApiVars.USERNAME_ATTRIBUTE;
@@ -35,7 +38,7 @@ public abstract class AbstractOAuth2TokenGranter implements TokenGranter {
         );
 
         return getAuthenticationManager().authenticate(usernameAndPasswordToken)
-                .doOnError(throwable -> Mono.error(new OAuthError(throwable, throwable.getMessage(), "error authenticating user")))
+                .doOnError(throwable -> new OAuthError(throwable, throwable.getMessage(), "error authenticating user"))
                 .map(authentication -> new OAuth2AuthorizationRequest(authorizationRequest, authentication));
     }
 
@@ -51,6 +54,15 @@ public abstract class AbstractOAuth2TokenGranter implements TokenGranter {
         oAuth2Authentication.setAuthenticationStage(AuthenticationStage.COMPLETE);
         LOG.debug("created Authentication Token");
         return oAuth2Authentication;
+    }
+
+    protected Mono<AuthorizationTokenResponse> grantTokensFromAuthentication(OAuth2Authentication authentication) {
+        var accessTokenFn = getTokenServices().createAccessToken(authentication);
+        var refreshTokenFn = getTokenServices().createRefreshToken(accessTokenFn, authentication);
+        return Mono.zip(accessTokenFn, refreshTokenFn, (accessToken, refreshToken) -> {
+            var scopes = authentication.getAuthorizationRequest().storedRequest().getScope();
+            return new AuthorizationTokenResponse(accessToken, scopes, Optional.ofNullable(refreshToken));
+        });
     }
 
     protected TokenServices getTokenServices() {

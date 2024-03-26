@@ -4,6 +4,7 @@ import com.nimbusds.oauth2.sdk.GrantType;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import dev.rexijie.oauth.oauth2server.api.domain.RefreshTokenRequest;
+import dev.rexijie.oauth.oauth2server.auth.AuthenticationStage;
 import dev.rexijie.oauth.oauth2server.model.dto.ClientDTO;
 import dev.rexijie.oauth.oauth2server.services.client.ClientService;
 import dev.rexijie.oauth.oauth2server.services.user.UserService;
@@ -76,6 +77,17 @@ public class DefaultTokenServices implements TokenServices {
     }
 
     @Override
+    public Mono<OAuth2Token> createRefreshToken(Mono<OAuth2Token> accessToken, Authentication authentication) {
+        if (authentication instanceof OAuth2Authentication clientAuthentication) {
+            clientAuthentication.setAuthenticationStage(AuthenticationStage.GENERATE_REFRESH_TOKEN);
+            return accessToken.flatMap(
+                    token -> getTokenEnhancer().enhance((OAuth2AccessToken) token, clientAuthentication)
+            );
+        }
+        return Mono.error(INVALID_CLIENT_ERROR);
+    }
+
+    @Override
     public Mono<OAuth2Token> refreshAccessToken(RefreshToken token, RefreshTokenRequest request) {
         // read userAuthentication from access token,
         // use it to regenerate token
@@ -113,6 +125,7 @@ public class DefaultTokenServices implements TokenServices {
         return getTokenEnhancer().enhance(accessToken, authentication);
     }
 
+    // TODO - refresh token here?
     private Mono<OAuth2Token> createUserToken(String clientId, String userId, OAuth2Authentication clientAuthentication) {
         return clientService.findClientById(clientId)
                 .zipWith(userService.findUserByUsername(userId), (clientDTO, userDTO) -> {
